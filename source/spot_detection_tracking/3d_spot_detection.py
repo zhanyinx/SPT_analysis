@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import skimage.io
 
-from .utils import *
-from .trackmate_xml import create_trackmate_xml
+from utils import *
+from trackmate_xml import create_trackmate_xml
 
 matplotlib.use("Agg")
 
