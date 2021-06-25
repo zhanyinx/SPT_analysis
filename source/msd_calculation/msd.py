@@ -45,7 +45,7 @@ def main():
     results = [calculate_all_tamsd(f) for f in trajectory_files]
     df = pd.concat(results)
 
-    df.to_csv(args.output)
+    df.to_csv(args.output, index=False)
 
 
 if __name__ == "__main__":
