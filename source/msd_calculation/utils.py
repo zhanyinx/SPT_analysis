@@ -1,6 +1,9 @@
+import os
+import copy
+import sys
+
 import numpy as np
 import pandas as pd
-import os
 
 
 def calculate_single_tamsd(single_traj: pd.DataFrame, min_points: int = 10):
@@ -80,3 +83,65 @@ def calculate_all_tamsd(
     results["traj_file"] = os.path.basename(traj_file)
 
     return results
+
+
+def filter_track_single_movie(filename, threshold=10, max_num_trajs_per_cell=100):
+    """
+    Given a file containing the trajectories of a movie, it filters out all tracks with
+    less than threshold timepoints; in addition it filters out cells with too little (<2)
+    or too many trajectories (> max_num_traj_per_cell).
+    Input:
+        filename: file containing the trajectories
+        threshold - minimal track length (in timepoints)
+        max_num_trajs_per_cell - maximum number of trajectories (particles) per cell
+    Output:
+        Void
+    """
+    ini = True
+    trajs = []
+    pure_df = pd.DataFrame()
+    df = pd.read_csv(filename)
+    df = df.mask(df["track"].astype(object).eq("None")).dropna()
+
+    cells = set(df["cell"].values)
+    cells.discard(0)
+    print("Total length", len(df))
+    print(
+        "number of duplicates",
+        np.sum(df.duplicated(subset=["track", "cell", "frame"]).values),
+    )
+    for cell in cells:
+        sdf = df[(df["cell"] == cell)]
+        trajs.append([])
+        trs = set(sdf["track"].values)
+        for track in trs:
+            check_it = sdf[(sdf["track"] == track)]
+            if len(check_it) < threshold:
+                sdf = sdf.drop(check_it.index, axis=0)
+                df = df.drop(check_it.index, axis=0)
+                continue
+            if ini:
+                pure_df = check_it
+                ini = False
+            else:
+                pure_df = pd.concat([pure_df, check_it])
+            trajs[-1].append(1)
+        if len(trajs[-1]) < 2 or len(trajs[-1]) > max_num_trajs_per_cell:
+            for track in trs:
+                ssdf = sdf[sdf["track"] == track]
+                df = df.drop(ssdf.index, axis=0, errors="ignore")
+                pure_df = pure_df.drop(ssdf.index, axis=0, errors="ignore")
+
+    if len(pure_df) > 0:
+        pure_df[["track", "x", "y", "z", "frame", "cell"]].to_csv(
+            filename + "pure.csv", index=False
+        )
+
+
+def filter_tracks(list_files: list):
+    """Given folder of tracks, performs quality filters on all tracks,
+    see filter_track_single_movie function for more info."""
+
+    for f in list_files:
+        filter_track_single_movie(f, threshold=5)
+        print(f, " is done")
