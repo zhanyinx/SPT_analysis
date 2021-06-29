@@ -20,6 +20,14 @@ def _parse_args():
         help="Input file or folder with trajectory files.",
     )
     parser.add_argument(
+        "-m",
+        "--min_length",
+        type=int,
+        default=10,
+        required=False,
+        help="Minimum number of timepoints per trajectory.",
+    )
+    parser.add_argument(
         "-o",
         "--output",
         type=str,
@@ -43,7 +51,7 @@ def main():
         raise ValueError(f"{args.input} must be a directory or a file!")
 
     # Filter tracks based on quality (length, number of tracks)
-    filter_tracks(trajectory_files)
+    filter_tracks(trajectory_files, args.min_length)
 
     path = os.path.abspath(args.input)
     trajectory_files = glob.glob(f"{path}/*pure.csv")

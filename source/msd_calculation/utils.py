@@ -85,14 +85,14 @@ def calculate_all_tamsd(
     return results
 
 
-def filter_track_single_movie(filename, threshold=10, max_num_trajs_per_cell=100):
+def filter_track_single_movie(filename, min_length=10, max_num_trajs_per_cell=100):
     """
     Given a file containing the trajectories of a movie, it filters out all tracks with
     less than threshold timepoints; in addition it filters out cells with too little (<2)
     or too many trajectories (> max_num_traj_per_cell).
     Input:
         filename: file containing the trajectories
-        threshold - minimal track length (in timepoints)
+        min_length - minimal track length (in timepoints)
         max_num_trajs_per_cell - maximum number of trajectories (particles) per cell
     Output:
         Void
@@ -116,7 +116,7 @@ def filter_track_single_movie(filename, threshold=10, max_num_trajs_per_cell=100
         trs = set(sdf["track"].values)
         for track in trs:
             check_it = sdf[(sdf["track"] == track)]
-            if len(check_it) < threshold:
+            if len(check_it) < min_length:
                 sdf = sdf.drop(check_it.index, axis=0)
                 df = df.drop(check_it.index, axis=0)
                 continue
@@ -138,10 +138,10 @@ def filter_track_single_movie(filename, threshold=10, max_num_trajs_per_cell=100
         )
 
 
-def filter_tracks(list_files: list):
+def filter_tracks(list_files: list, min_length: int = 10):
     """Given folder of tracks, performs quality filters on all tracks,
     see filter_track_single_movie function for more info."""
 
     for f in list_files:
-        filter_track_single_movie(f, threshold=5)
+        filter_track_single_movie(f, min_length=min_length)
         print(f, " is done")
