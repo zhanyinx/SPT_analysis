@@ -20,12 +20,20 @@ def _parse_args():
         help="Input file or folder with trajectory files.",
     )
     parser.add_argument(
-        "-m",
+        "-ml",
         "--min_length",
         type=int,
         default=10,
         required=False,
         help="Minimum number of timepoints per trajectory.",
+    )
+    parser.add_argument(
+        "-mp",
+        "--min_points",
+        type=int,
+        default=5,
+        required=False,
+        help="Minimum number of points to calculate tamsd.",
     )
     parser.add_argument(
         "-o",
@@ -57,7 +65,10 @@ def main():
     trajectory_files = glob.glob(f"{path}/*pure.csv")
 
     # Calculate all tamsd
-    results = [calculate_all_tamsd(f) for f in trajectory_files]
+    results = [
+        calculate_all_tamsd(f, min_points=args.min_points, min_length=args.min_length)
+        for f in trajectory_files
+    ]
     df = pd.concat(results)
 
     # Add more info to results
@@ -67,7 +78,7 @@ def main():
         re.search("laminin_2i_[^_]*_([^_]*)_", x)[1] for x in allinfo
     ]
     df["rep"] = [re.search("_([0-9])_", x)[1] for x in allinfo]
-    df["stage"] = [re.search("_s([0-9])_", x)[1] for x in allinfo]
+    df["date"] = [re.search("_([0-9]*)_laminin_2i_", x)[1] for x in allinfo]
     df.to_csv(args.output, index=False)
 
 

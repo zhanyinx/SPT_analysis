@@ -15,7 +15,8 @@ def calculate_single_tamsd(single_traj: pd.DataFrame, min_points: int = 10):
     Return:
         df: pd.DataFrame containing lags and time average MSD"""
 
-    # Calculate pair-wise differences between all timepoints in the trajectory
+    # Calculate pair-wise differences between all timepoints in the trajectory and store it
+    # in a matrix
     tvalues = single_traj["frame"].values
     tvalues = tvalues[:, None] - tvalues
 
@@ -47,16 +48,13 @@ def calculate_single_tamsd(single_traj: pd.DataFrame, min_points: int = 10):
     return df
 
 
-def calculate_all_tamsd(
-    traj_file: str, min_points: int = 10, min_length: int = 10, log=False
-):
+def calculate_all_tamsd(traj_file: str, min_points: int = 10, min_length: int = 10):
     """Calculate all time average MSD given a movie and return a DataFrame containing them.
 
     Inputs:
         traj_file: path to the trajectories file.
         min_points: minimum number of points to consider time average MSD.
         min_length: minimum length of trajectory accepted.
-        log: transform in log prior ensamble average, default False.
 
     Return:
         results: pd.DataFrame containing all time average MSD given the trajectories of a movie.
@@ -85,17 +83,15 @@ def calculate_all_tamsd(
     return results
 
 
-def filter_track_single_movie(filename, min_length=10, max_num_trajs_per_cell=100):
+def filter_track_single_movie(filename, min_length=10, max_num_trajs_per_cell=1000000):
     """
     Given a file containing the trajectories of a movie, it filters out all tracks with
-    less than threshold timepoints; in addition it filters out cells with too little (<2)
+    less than min_length timepoints; in addition it filters out cells with too little (<2)
     or too many trajectories (> max_num_traj_per_cell).
     Input:
         filename: file containing the trajectories
         min_length - minimal track length (in timepoints)
         max_num_trajs_per_cell - maximum number of trajectories (particles) per cell
-    Output:
-        Void
     """
     ini = True
     trajs = []
