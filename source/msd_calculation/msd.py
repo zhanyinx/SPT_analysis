@@ -78,7 +78,7 @@ def main():
         re.search("laminin_2i_[^_]*_([^_]*)_", x)[1] for x in allinfo
     ]
     df["rep"] = [re.search("_([0-9])_", x)[1] for x in allinfo]
-    df["date"] = [re.search("([0-9]*)_laminin_2i_", x)[1] for x in allinfo]
+    df["date"] = [re.search("(20[0-9]*)_", x)[1] for x in allinfo]
     df.to_csv(args.output, index=False)
 
 
