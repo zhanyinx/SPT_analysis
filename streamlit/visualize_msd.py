@@ -23,8 +23,8 @@ def load_data(data: str):
 
 
 filename = st.text_input("Enter the input file containing the data", "./output.csv")
-interval = int(st.text_input("Time step acquisition"))
-limit = int(st.text_input("Until where you trust the data?"))
+interval = int(st.text_input("Time step acquisition", "10"))
+limit = int(st.text_input("Until where you trust the data?", "500"))
 
 
 original_data = load_data(filename)
@@ -56,4 +56,9 @@ if st.checkbox("Show raw data"):
 fig = plt.figure()
 
 sns.lineplot(data=data, x="lags", y="tamsd", hue="condition", err_style="bars", ci=68)
+plt.xscale("log")
+plt.yscale("log")
+plt.xlabel("dt (sec)")
+plt.ylabel("EA-tamsd (um^2)")
+
 st.pyplot(fig)
