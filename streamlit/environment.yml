@@ -1,0 +1,6 @@
+name: visualize_msd
+dependencies:
+  - numpy
+  - pandas
+  - seaborn
+  - matplotlib
