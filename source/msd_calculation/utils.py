@@ -36,9 +36,12 @@ def calculate_single_tamsd(single_traj: pd.DataFrame, min_points: int = 10):
 
         final_lags.append(lag)
         tmp_tamsd = np.mean(
-            np.square(
-                single_traj.iloc[x][["x", "y", "z"]].values
-                - single_traj.iloc[y][["x", "y", "z"]].values
+            np.sum(
+                np.square(
+                    single_traj.iloc[x][["x", "y", "z"]].values
+                    - single_traj.iloc[y][["x", "y", "z"]].values
+                ),
+                axis=1,
             )
         )
         tamsd.append(tmp_tamsd)
