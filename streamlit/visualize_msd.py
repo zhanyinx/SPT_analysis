@@ -57,6 +57,14 @@ data = data[(data["lags"] < limit)]
 data = data[data["cell_line"].isin(cell_lines)]
 data = data[data["induction_time"].isin(induction_time)]
 
+systematic_error = st.sidebar.number_input(
+    "Systematic error (rho) from fixed cells. 2*rho**2 will be subtracted",
+    value=0.068,
+    min_value=0.0,
+    format="%.5f",
+)
+
+data["tamsd"] = data["tamsd"] - 2 * systematic_error ** 2
 
 # Options for plot
 pool_replicates = st.sidebar.checkbox("Pool replicates")
@@ -85,7 +93,7 @@ plt.xscale("log")
 plt.yscale("log")
 plt.xlabel("dt (sec)")
 plt.ylabel("EA-tamsd (um^2)")
-plt.ylim(0.01, 2)
+plt.ylim(0.005, 2)
 
 st.pyplot(fig)
 
