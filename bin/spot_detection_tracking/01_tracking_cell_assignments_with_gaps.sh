@@ -83,7 +83,7 @@ if ! [ -d $pathspt ]; then
     exit
 fi
 
-if ! [ -d $pathfiji ]; then
+if ! [ -f $pathfiji ]; then
     echo "$pathfiji does not exist!"
     exit
 fi
