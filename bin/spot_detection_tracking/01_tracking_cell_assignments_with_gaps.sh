@@ -52,7 +52,7 @@ do
         i) pathxml=$OPTARG;;
         f) pathfiji=$OPTARG;;
         s) pathspt=$OPTARG;;
-        s) pathmask=$OPTARG;;
+        m) pathmask=$OPTARG;;
         h) help ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
@@ -106,7 +106,9 @@ if ! [ -d tracks_gap ]; then
         mkdir tracks_gap
 fi
 
-for file in `ls $input/*xml`; do
+basedir=`pwd`
+
+for file in `ls $pathxml/*xml`; do
     echo "nice -n 19 $pathfiji --ij2 --headless --run $pathspt/source/spot_detection_tracking/trackmate_tracking_gap.py 'basedir=\"$basedir/tracks_gap\",xml=\"$file\"'" >> apporun.sh
 done
 
@@ -119,7 +121,6 @@ fi
 
 
 for file in `ls $basedir/tracks_gap/*xml`; do
-
 	name=`echo $file | xargs -0 -n 1 basename | sed 's/\.tracks\.xml//g'`
 	
 	mask=`ls $pathmask/$name`
