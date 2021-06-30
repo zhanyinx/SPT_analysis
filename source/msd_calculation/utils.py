@@ -44,6 +44,7 @@ def calculate_single_tamsd(single_traj: pd.DataFrame, min_points: int = 10):
         tamsd.append(tmp_tamsd)
 
     df = pd.DataFrame({"lags": final_lags, "tamsd": tamsd})
+    df["cellid"] = single_traj["cell"]
 
     return df
 
