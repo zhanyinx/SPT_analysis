@@ -40,7 +40,7 @@ st.title("MSD visualisation app")
 
 # Take input from user and load file and make a copy
 filename = st.sidebar.text_input(
-    "Enter the input file containing the tamsd data.", "rad21_with_gaps.csv"
+    "Enter the input file containing the tamsd data.", "rad21_with_gaps.csv.zip"
 )
 original_data = load_data(filename)
 data = original_data.copy()
