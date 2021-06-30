@@ -8,9 +8,6 @@ import os
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# Set title
-st.title("MSD visualisation app")
-
 # load data and cache it
 @st.cache
 def load_data(data: str):
@@ -21,6 +18,24 @@ def load_data(data: str):
     df = pd.read_csv(data)
     return df
 
+
+# Fit alpha and diffusion coefficient given 3 regimes
+def fit_alpha_d(subset: pd.DataFrame, end1: float, end2: float):
+    """Fit the alpha and D under the 3 different regimes separated by end1 and end2 values."""
+    r1 = subset[subset["lags"] <= end1].copy()
+    r2 = subset[(subset["lags"] > end1) & (subset["lags"] <= end2)].copy()
+    r3 = subset[subset["lags"] > end2].copy()
+
+    a1, d1 = np.polyfit(np.log10(r1["lags"]), np.log10(r1["tamsd"]), 1)
+    a2, d2 = np.polyfit(np.log10(r2["lags"]), np.log10(r2["tamsd"]), 1)
+    a3, d3 = np.polyfit(np.log10(r3["lags"]), np.log10(r3["tamsd"]), 1)
+
+    df = pd.DataFrame({"alphas": [a1, a2, a3], "Ds": [10 ** d1, 10 ** d2, 10 ** d3]})
+    return df
+
+
+# Set title
+st.title("MSD visualisation app")
 
 # Take input from user and load file and make a copy
 filename = st.sidebar.text_input(
@@ -98,3 +113,38 @@ plt.ylim(0.005, 2)
 st.pyplot(fig)
 
 # Create table of alphas and Ds
+if st.checkbox("Show alpha and D?"):
+    df_alphas = pd.DataFrame(data.groupby(["lags", "condition"]).mean()["tamsd"])
+    df_alphas.reset_index(inplace=True)
+
+    # Select the upper limit first range of fit
+    end1 = int(
+        st.slider(
+            "End of first regime for fitting a and D",
+            min_value=min(df_alphas["lags"]),
+            max_value=max(df_alphas["lags"]),
+            value=60,
+            step=interval,
+        )
+    )
+
+    # Select the upper limit second range of fit
+    end2 = int(
+        st.slider(
+            "End of second regime for fitting a and D",
+            min_value=end1,
+            max_value=max(data["lags"]),
+            value=300,
+            step=interval,
+        )
+    )
+
+    df = pd.DataFrame()
+    for condition in df_alphas["condition"].unique():
+        subset = df_alphas[df_alphas["condition"] == condition]
+        res = fit_alpha_d(subset, end1, end2)
+        res["condition"] = condition
+        df = pd.concat([df, res])
+    df["regime"] = df.index
+
+    st.dataframe(df)
