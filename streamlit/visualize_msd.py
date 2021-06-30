@@ -1,4 +1,3 @@
-from pkg_resources import add_activation_listener
 import streamlit as st
 
 # To make things easier later, we're also importing numpy and pandas for
