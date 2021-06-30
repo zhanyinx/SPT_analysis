@@ -1,3 +1,4 @@
+from pkg_resources import add_activation_listener
 import streamlit as st
 
 # To make things easier later, we're also importing numpy and pandas for
@@ -22,8 +23,8 @@ def load_data(data: str):
 # Fit alpha and diffusion coefficient given 3 regimes
 def fit_alpha_d(subset: pd.DataFrame, end1: float, end2: float):
     """Fit the alpha and D under the 3 different regimes separated by end1 and end2 values."""
-    r1 = subset[subset["lags"] <= end1].copy()
-    r2 = subset[(subset["lags"] > end1) & (subset["lags"] <= end2)].copy()
+    r1 = subset[subset["lags"] < end1].copy()
+    r2 = subset[(subset["lags"] >= end1) & (subset["lags"] <= end2)].copy()
     r3 = subset[subset["lags"] > end2].copy()
 
     a1, d1 = np.polyfit(np.log10(r1["lags"]), np.log10(r1["tamsd"]), 1)
@@ -68,13 +69,13 @@ induction_time = st.sidebar.multiselect(
 )
 
 # Filter data to keep only the selected lines and induction time
-data = data[(data["lags"] < limit)]
+data = data[(data["lags"] <= limit)]
 data = data[data["cell_line"].isin(cell_lines)]
 data = data[data["induction_time"].isin(induction_time)]
 
 systematic_error = st.sidebar.number_input(
     "Systematic error (rho) from fixed cells. 2*rho**2 will be subtracted",
-    value=0.068,
+    value=0.086,
     min_value=0.0,
     format="%.5f",
 )
@@ -83,7 +84,11 @@ data["tamsd"] = data["tamsd"] - 2 * systematic_error ** 2
 
 # Options for plot
 pool_replicates = st.sidebar.checkbox("Pool replicates")
-if pool_replicates:
+pool_clones_replicates = st.sidebar.checkbox("Pool clones and replicates")
+
+if pool_clones_replicates:
+    data["condition"] = data["induction_time"]
+elif pool_replicates:
     data["condition"] = [
         f"{cl}_itime{time}"
         for cl, time in zip(data["cell_line"], data["induction_time"])
@@ -108,9 +113,14 @@ plt.xscale("log")
 plt.yscale("log")
 plt.xlabel("dt (sec)")
 plt.ylabel("EA-tamsd (um^2)")
-plt.ylim(0.005, 2)
+plt.ylim(0.01, 2)
 
 st.pyplot(fig)
+
+if st.checkbox("Show raw data"):
+    res = pd.DataFrame(data.groupby(["lags", "condition"]).mean()["tamsd"])
+    res.reset_index(inplace=True)
+    st.dataframe(res)
 
 # Create table of alphas and Ds
 if st.checkbox("Show alpha and D?"):
@@ -119,24 +129,12 @@ if st.checkbox("Show alpha and D?"):
 
     # Select the upper limit first range of fit
     end1 = int(
-        st.slider(
-            "End of first regime for fitting a and D",
-            min_value=min(df_alphas["lags"]),
-            max_value=max(df_alphas["lags"]),
-            value=60,
-            step=interval,
-        )
+        st.number_input("End of first regime for fitting a and D", 60, step=interval)
     )
 
     # Select the upper limit second range of fit
     end2 = int(
-        st.slider(
-            "End of second regime for fitting a and D",
-            min_value=end1,
-            max_value=max(data["lags"]),
-            value=300,
-            step=interval,
-        )
+        st.number_input("End of second regime for fitting a and D", 200, step=interval)
     )
 
     df = pd.DataFrame()
