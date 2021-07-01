@@ -72,13 +72,9 @@ def main():
     df = pd.concat(results)
 
     # Add more info to results
-    allinfo = df["traj_file"]
-    df["cell_line"] = [re.search("laminin_2i_([^_]*)", x)[1] for x in allinfo]
-    df["induction_time"] = [
-        re.search("laminin_2i_[^_]*_([^_]*)_", x)[1] for x in allinfo
-    ]
-    df["rep"] = [re.search("_([0-9])_", x)[1] for x in allinfo]
-    df["date"] = [re.search("(20[0-9]*)_", x)[1] for x in allinfo]
+    df[["date", "cell_line", "induction_time", "rep"]] = df["traj_file"].str.extract(
+        r"(20[0-9]*)_[\w_]*?[\w_]*?laminin_2i_([^_]*)_([^_]*)_*_([0-9])_", expand=True
+    )
     df.to_csv(args.output, index=False)
 
 
