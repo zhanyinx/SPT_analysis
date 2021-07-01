@@ -47,9 +47,9 @@ sample_name = st.sidebar.selectbox(
     list(list_samples.keys()),
 )
 
-
-sample_link = list_samples[sample_name]
-gdown.download(sample_link, f"{sample_name}.csv.zip")
+if not os.path.isfile(f"{sample_name}.csv.zip"):
+    sample_link = list_samples[sample_name]
+    gdown.download(sample_link, f"{sample_name}.csv.zip")
 
 
 original_data = load_data(f"{sample_name}.csv.zip")
