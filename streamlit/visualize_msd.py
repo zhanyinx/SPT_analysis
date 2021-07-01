@@ -1,36 +1,8 @@
-import streamlit as st
-
-# To make things easier later, we're also importing numpy and pandas for
-# working with sample data.
-import numpy as np
-import pandas as pd
 import os
 import seaborn as sns
 import matplotlib.pyplot as plt
-import gdown
 
-
-# load data and cache it
-@st.cache
-def load_data(data: str):
-    """Load data from csv file using pandas."""
-    df = pd.read_csv(data)
-    return df
-
-
-# Fit alpha and diffusion coefficient given 3 regimes
-def fit_alpha_d(subset: pd.DataFrame, end1: float, end2: float):
-    """Fit the alpha and D under the 3 different regimes separated by end1 and end2 values."""
-    r1 = subset[subset["lags"] < end1].copy()
-    r2 = subset[(subset["lags"] >= end1) & (subset["lags"] <= end2)].copy()
-    r3 = subset[subset["lags"] > end2].copy()
-
-    a1, d1 = np.polyfit(np.log10(r1["lags"]), np.log10(r1["tamsd"]), 1)
-    a2, d2 = np.polyfit(np.log10(r2["lags"]), np.log10(r2["tamsd"]), 1)
-    a3, d3 = np.polyfit(np.log10(r3["lags"]), np.log10(r3["tamsd"]), 1)
-
-    df = pd.DataFrame({"alphas": [a1, a2, a3], "Ds": [10 ** d1, 10 ** d2, 10 ** d3]})
-    return df
+from utils import *
 
 
 # Set title
@@ -127,10 +99,25 @@ plt.ylim(0.01, 2)
 
 st.pyplot(fig)
 
+plt.savefig("plot.pdf")
+st.markdown(
+    download_plot(
+        "plot.pdf",
+        "Download plot",
+    ),
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    download_csv(data, "table.csv", "Download data used in the plot"),
+    unsafe_allow_html=True,
+)
+
 if st.checkbox("Show raw data"):
     res = pd.DataFrame(data.groupby(["lags", "condition"]).mean()["tamsd"])
     res.reset_index(inplace=True)
     st.dataframe(res)
+
 
 # Create table of alphas and Ds
 if st.checkbox("Show alpha and D?"):
