@@ -1,9 +1,10 @@
 name: visualize_msd
 channels: 
-  - conda-forge
   - defaults
   - anaconda
+  - conda-forge
 dependencies:
+  - libgcc
   - numpy
   - pandas
   - seaborn
