@@ -7,14 +7,13 @@ import pandas as pd
 import os
 import seaborn as sns
 import matplotlib.pyplot as plt
+import gdown
+
 
 # load data and cache it
 @st.cache
 def load_data(data: str):
     """Load data from csv file using pandas."""
-    if not os.path.isfile(data):
-        raise ValueError(f"{data} file does not exist.")
-
     df = pd.read_csv(data)
     return df
 
@@ -37,11 +36,23 @@ def fit_alpha_d(subset: pd.DataFrame, end1: float, end2: float):
 # Set title
 st.title("MSD visualisation app")
 
+# Samples
+list_samples = {
+    "rad21_gaps": "https://drive.google.com/uc?export=download&id=1EzPK_nxJ3CmBA_Sw_21zX0J2q7cMUOdK"
+}
+
 # Take input from user and load file and make a copy
-filename = st.sidebar.text_input(
-    "Enter the input file containing the tamsd data.", "rad21_with_gaps.csv.zip"
+sample_name = st.sidebar.selectbox(
+    "Enter the input file containing the tamsd data.",
+    list(list_samples.keys()),
 )
-original_data = load_data(filename)
+
+
+sample_link = list_samples[sample_name]
+gdown.download(sample_link, f"{sample_name}.csv.zip")
+
+
+original_data = load_data(f"{sample_name}.csv.zip")
 data = original_data.copy()
 
 # Take input from user for time resultion of acquisition

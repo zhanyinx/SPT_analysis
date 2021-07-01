@@ -4,3 +4,4 @@ dependencies:
   - pandas
   - seaborn
   - matplotlib
+  - gdown
