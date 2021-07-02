@@ -5,7 +5,6 @@ import sys
 import numpy as np
 import pandas as pd
 
-
 def calculate_single_tamsd(single_traj: pd.DataFrame, min_points: int = 10):
     """Calculate trajectory average MSD at all lags.
 
@@ -14,7 +13,6 @@ def calculate_single_tamsd(single_traj: pd.DataFrame, min_points: int = 10):
         min_points: minimum number of points to calculate the time average MSD
     Return:
         df: pd.DataFrame containing lags and time average MSD"""
-
     # Calculate pair-wise differences between all timepoints in the trajectory and store it
     # in a matrix
     tvalues = single_traj["frame"].values
@@ -26,15 +24,13 @@ def calculate_single_tamsd(single_traj: pd.DataFrame, min_points: int = 10):
     final_lags = []
     tamsd = []
     # Loop over lags
-    for lag in lags:
-
+    for lag in lags:        
         # find indexes of pairs of timepoints with lag equal to the selected lag
         x, y = np.where(tvalues == lag)
 
         if len(x) < min_points:
             continue
 
-        final_lags.append(lag)
         tmp_tamsd = np.mean(
             np.sum(
                 np.square(
@@ -44,11 +40,13 @@ def calculate_single_tamsd(single_traj: pd.DataFrame, min_points: int = 10):
                 axis=1,
             )
         )
+
+        final_lags.append(lag)
         tamsd.append(tmp_tamsd)
 
     df = pd.DataFrame({"lags": final_lags, "tamsd": tamsd})
     df["cellid"] = single_traj["cell"]
-
+    
     return df
 
 
@@ -83,7 +81,7 @@ def calculate_all_tamsd(traj_file: str, min_points: int = 10, min_length: int = 
         results = pd.concat([results, df_tmp])
 
     results["traj_file"] = os.path.basename(traj_file)
-
+    
     return results
 
 
