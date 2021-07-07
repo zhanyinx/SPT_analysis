@@ -37,9 +37,9 @@ data["lags"] = data["lags"] * interval
 limit = float(
     st.sidebar.slider(
         "Until where you trust the data (in second)?",
-        min_value=0,
+        min_value=0.0,
         max_value=max(data["lags"]),
-        value=500,
+        value=500.0,
         step=interval,
     )
 )
@@ -97,7 +97,8 @@ plt.xscale("log")
 plt.yscale("log")
 plt.xlabel("dt (sec)")
 plt.ylabel("EA-tamsd (um^2)")
-plt.ylim(0.01, 2)
+if st.checkbox("Fixed y axis values"):
+    plt.ylim(0.01, 2)
 
 st.pyplot(fig)
 
@@ -128,12 +129,14 @@ if st.checkbox("Show alpha and D?"):
 
     # Select the upper limit first range of fit
     end1 = float(
-        st.number_input("End of first regime for fitting a and D", 60, step=interval)
+        st.number_input("End of first regime for fitting a and D", 60.0, step=interval)
     )
 
     # Select the upper limit second range of fit
     end2 = float(
-        st.number_input("End of second regime for fitting a and D", 200, step=interval)
+        st.number_input(
+            "End of second regime for fitting a and D", 200.0, step=interval
+        )
     )
 
     df = pd.DataFrame()
