@@ -1,7 +1,7 @@
 #!/bin/bash
     
 ## Author(s): Yinxiu Zhan
-## Contact: yinxiu.zhant@fmi.ch
+## Contact: yinxiu.zhan@fmi.ch
 ## This software is distributed without any guarantee under the terms of the GNU General
 ## Public License, either Version 2, June 1991 or Version 3, June 2007.
 
@@ -14,8 +14,7 @@ function usage {
 function help {
     usage;
     echo 
-    echo "Detect spots using deepBlink."
-    echo "See https://github.com/BBQuercus/deepBlink for details about deepBlink"
+    echo "Tracking and cell assignment."
     echo "---------------"
     echo "OPTIONS"
     echo

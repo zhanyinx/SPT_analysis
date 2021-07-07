@@ -1,7 +1,7 @@
 #!/bin/bash
     
 ## Author(s): Yinxiu Zhan
-## Contact: yinxiu.zhant@fmi.ch
+## Contact: yinxiu.zhan@fmi.ch
 ## This software is distributed without any guarantee under the terms of the GNU General
 ## Public License, either Version 2, June 1991 or Version 3, June 2007.
 
