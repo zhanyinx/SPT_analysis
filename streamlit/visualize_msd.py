@@ -10,7 +10,8 @@ st.title("MSD visualisation app")
 
 # Samples
 list_samples = {
-    "rad21_gaps": "https://drive.google.com/uc?export=download&id=1EzPK_nxJ3CmBA_Sw_21zX0J2q7cMUOdK"
+    "rad21_gaps": "https://drive.google.com/uc?export=download&id=1UHfqftidv1MKOtnzhyXHNKVFQZPKIj2Z",
+    "rad21_nogaps": "https://drive.google.com/uc?export=download&id=1EzPK_nxJ3CmBA_Sw_21zX0J2q7cMUOdK",
 }
 
 # Take input from user and load file and make a copy
