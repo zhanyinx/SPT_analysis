@@ -126,12 +126,9 @@ writer.appendModel( trackmate.getModel() ) #trackmate instantiate like this befo
 writer.appendSettings( trackmate.getSettings() )
 writer.writeToFile()
 
-spots = [['Label', 'ID', 'TRACK_ID', 'QUALITY', 'POSITION_X', 'POSITION_Y',
-       'POSITION_Z', 'POSITION_T', 'FRAME', 'RADIUS', 'VISIBILITY',
-       'MANUAL_INTEGER_SPOT_FEATURE', 'MANUAL_DOUBLE_SPOT_FEATURE',
-       'HAS_MAX_QUALITY_IN_FRAME', 'MANUAL_COLOR', 'MEAN_INTENSITY',
-       'MEDIAN_INTENSITY', 'MIN_INTENSITY', 'MAX_INTENSITY', 'TOTAL_INTENSITY',
-       'STANDARD_DEVIATION', 'ESTIMATED_DIAMETER', 'CONTRAST', 'SNR']]
+track,x,y,z,frame,cell
+
+spots = [['track', 'x', 'y', 'z', 'frame', 'cell']]
 
 
 # Export as csv
@@ -147,16 +144,9 @@ for id in model.getTrackModel().trackIDs(True):
         y=spot.getFeature('POSITION_Y')
         z=spot.getFeature('POSITION_Z')
         t=spot.getFeature('POSITION_T')
-        f=spot.getFeature('FRAME')
-        q=spot.getFeature('QUALITY')
-        snr=spot.getFeature('SNR') 
        
-    	spots.append(["ID" + str(sid) , sid, id, q, x, y, 
-                      z, t, f, -1 , -1, 
-                      -1, -1,
-                      -1, -1, -1,
-                      -1, -1, -1, -1,
-                      -1, -1, -1, snr])
+    	spots.append([id, x, y, 
+                      z, t, -1 ])
 #write output
 with open(basedir + "/" + fname + ".tracks.csv", "wb") as f:
     wr = csv.writer(f)
