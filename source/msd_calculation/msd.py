@@ -48,11 +48,11 @@ def _parse_args():
         help="Output name",
     )
     parser.add_argument(
-        "-sp",
-        "--scratch_path",
+        "-t",
+        "--tmp",
         type=str,
         default="./scratch/",
-        required=True,
+        required=False,
         help="Scratch folder for temporary files.",
     )
     args = parser.parse_args()
@@ -66,13 +66,13 @@ def main():
     # Parse input
     args = _parse_args()
 
-    if not os.path.exists(args.scratch_path):
-        os.mkdir(args.scratch_path)
+    if not os.path.exists(args.tmp):
+        os.mkdir(args.tmp)
 
     # Start parallelization
     dask.config.set(shuffle="disk")
     dask.config.set(
-        {"temporary_directory": args.scratch_path}
+        {"temporary_directory": args.tmp}
     )  #'/work3/ggiorget/kospave/temp/'})
     client = Client()
 
@@ -102,7 +102,8 @@ def main():
 
     # Add more info to results
     df[["date", "cell_line", "induction_time", "rep"]] = df["traj_file"].str.extract(
-        r"(20[0-9]*)_[\w_]*?[\w_]*?laminin_2i_([^_]*)_([^_]*)_*_([0-9])_", expand=True
+        r"(20[0-9]*)_[\w_]*?[\w_]*?[\w_]*?[\w_]*?([^_]*)_([^_]*)_*_([0-9])_",
+        expand=True,
     )
     df.to_csv(args.output, index=False)
     # Stop parallelization
