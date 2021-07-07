@@ -30,11 +30,11 @@ original_data = load_data(f"{sample_name}.csv.zip")
 data = original_data.copy()
 
 # Take input from user for time resultion of acquisition
-interval = int(st.sidebar.text_input("Acquisition time resolution", "10"))
+interval = float(st.sidebar.text_input("Acquisition time resolution", "10"))
 data["lags"] = data["lags"] * interval
 
 # Select the upper limit for trustable data
-limit = int(
+limit = float(
     st.sidebar.slider(
         "Until where you trust the data (in second)?",
         min_value=0,
@@ -127,12 +127,12 @@ if st.checkbox("Show alpha and D?"):
     df_alphas.reset_index(inplace=True)
 
     # Select the upper limit first range of fit
-    end1 = int(
+    end1 = float(
         st.number_input("End of first regime for fitting a and D", 60, step=interval)
     )
 
     # Select the upper limit second range of fit
-    end2 = int(
+    end2 = float(
         st.number_input("End of second regime for fitting a and D", 200, step=interval)
     )
 
