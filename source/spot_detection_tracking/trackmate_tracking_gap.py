@@ -126,8 +126,6 @@ writer.appendModel( trackmate.getModel() ) #trackmate instantiate like this befo
 writer.appendSettings( trackmate.getSettings() )
 writer.writeToFile()
 
-track,x,y,z,frame,cell
-
 spots = [['track', 'x', 'y', 'z', 'frame', 'cell']]
 
 
