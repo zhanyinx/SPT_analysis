@@ -146,10 +146,11 @@ def main():
     model = pink.io.load_model(args.model)
     outdir = "."
 
+    # Change relative path to abs path
+    args.input = os.path.abspath(args.input)
+
     if outname is None:
-        outname = os.path.basename(args.input).replace("tiff", "pdf")
-        outname = outname.replace("tif", "pdf")
-        outname = outname.replace("stk", "pdf")
+        outname = "".join([os.path.splitext(os.path.basename(args.input))[0], ".pdf"])
 
     # create output directory
     if not os.path.exists(f"{outdir}/pixel_based"):
