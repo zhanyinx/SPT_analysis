@@ -51,23 +51,29 @@ def _parse_args():
         "-sp",
         "--scratch_path",
         type=str,
-        default='./scratch/',
+        default="./scratch/",
         required=True,
         help="Scratch folder for temporary files.",
     )
     args = parser.parse_args()
     return args
 
+
 def main():
     """Calculate MSD given trajectory file."""
     t0 = time.time()
-    
+
     # Parse input
     args = _parse_args()
-    
+
+    if not os.path.exists(args.scratch_path):
+        os.mkdir(args.scratch_path)
+
     # Start parallelization
-    dask.config.set(shuffle='disk')
-    dask.config.set({'temporary_directory': args.scratch_path})#'/work3/ggiorget/kospave/temp/'})
+    dask.config.set(shuffle="disk")
+    dask.config.set(
+        {"temporary_directory": args.scratch_path}
+    )  #'/work3/ggiorget/kospave/temp/'})
     client = Client()
 
     if os.path.isdir(args.input):
@@ -84,7 +90,12 @@ def main():
     trajectory_files = glob.glob(f"{path}/*pure.csv")
 
     # Calculate all tamsd
-    res = client.map(calculate_all_tamsd, trajectory_files, min_points=args.min_points, min_length=args.min_length)
+    res = client.map(
+        calculate_all_tamsd,
+        trajectory_files,
+        min_points=args.min_points,
+        min_length=args.min_length,
+    )
     results = client.gather(res)
 
     df = pd.concat(results)
@@ -94,7 +105,7 @@ def main():
         r"(20[0-9]*)_[\w_]*?[\w_]*?laminin_2i_([^_]*)_([^_]*)_*_([0-9])_", expand=True
     )
     df.to_csv(args.output, index=False)
-    # Stop parallelization 
+    # Stop parallelization
     client.close()
     print("Fast version took", time.time() - t0)
 
