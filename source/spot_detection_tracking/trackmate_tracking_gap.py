@@ -146,7 +146,7 @@ for id in model.getTrackModel().trackIDs(True):
     	spots.append([id, x, y, 
                       z, t, -1 ])
 #write output
-with open(basedir + "/" + fname + ".tracks.csv", "wb") as f:
+with open(basedir + "/" + fname + "_corrected.csv", "wb") as f:
     wr = csv.writer(f)
     for row in spots:
         wr.writerow(row)
