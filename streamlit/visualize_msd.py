@@ -119,6 +119,7 @@ st.markdown(
 if st.checkbox("Show raw data"):
     res = pd.DataFrame(data.groupby(["lags", "condition"]).mean()["tamsd"])
     res.reset_index(inplace=True)
+    res["sqrtEATAmsd"] = np.sqrt(res["tamsd"])
     st.dataframe(res)
 
 
