@@ -102,7 +102,7 @@ def main():
 
     # Add more info to results
     df[["date", "cell_line", "induction_time", "rep"]] = df["traj_file"].str.extract(
-        r"(20[0-9]*)_[\w\W_]*?([^_]*)_([^_]*)_*_([0-9])_",
+        r"(20[0-9]*)_[\w\W_]*?([^_]*)_([^_]*)_[\d]*?[perc_]*?([0-9])_",
         expand=True,
     )
     df.to_csv(args.output, index=False)
