@@ -46,10 +46,10 @@ limit = float(
 
 # Select cell lines and induction time to show
 cell_lines = st.sidebar.multiselect(
-    "Choose your cell lines (multiple)", data["cell_line"].unique()
+    "Choose your cell lines (multiple)", list(data["cell_line"].unique())
 )
 induction_time = st.sidebar.multiselect(
-    "Choose the induction times to keep", data["induction_time"].unique()
+    "Choose the induction times to keep", list(data["induction_time"].unique())
 )
 
 # Filter data to keep only the selected lines and induction time
@@ -120,6 +120,7 @@ if st.checkbox("Show raw data"):
     res = pd.DataFrame(data.groupby(["lags", "condition"]).mean()["tamsd"])
     res.reset_index(inplace=True)
     res["sqrtEATAmsd"] = np.sqrt(res["tamsd"])
+    res.columns = ["delay", "condition", "EATAmsd", "sqrtEATAmsd"]
     st.dataframe(res)
 
 
