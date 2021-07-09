@@ -55,6 +55,13 @@ def _parse_args():
         required=False,
         help="Scratch folder for temporary files.",
     )
+    parser.add_argument(
+        "-ur",
+        "--uncorrected_residual",
+        dest="uncorrected_residual",
+        action="store_true",
+        help="If defined, it will look for uncorrected and residual files as well.",
+    )
     args = parser.parse_args()
     return args
 
@@ -78,6 +85,9 @@ def main():
 
     if os.path.isdir(args.input):
         trajectory_files = glob.glob(f"{args.input}/*_corrected.csv")
+        if args.uncorrected_residual:
+            trajectory_files.extend(glob.glob(f"{args.input}/*_residual.csv"))
+            trajectory_files.extend(glob.glob(f"{args.input}/*_uncorrected.csv"))
     elif os.path.isfile(args.input):
         trajectory_files = [args.input]
     else:
@@ -101,8 +111,10 @@ def main():
     df = pd.concat(results)
 
     # Add more info to results
-    df[["date", "cell_line", "induction_time", "rep"]] = df["traj_file"].str.extract(
-        r"(20[0-9]*)_[\w\W_]*?([^_]*)_([^_]*)_[\d]*?[perc_]*?([0-9])_",
+    df[["date", "cell_line", "induction_time", "rep", "motion_correction_type"]] = df[
+        "traj_file"
+    ].str.extract(
+        r"(20[0-9]*)_[\w\W_]*?([^_]*)_([^_]*)_[\d]*?[perc_]*?([0-9])_[\w\W]*?_([\w]*)\.csvpure",
         expand=True,
     )
     df.to_csv(args.output, index=False)
