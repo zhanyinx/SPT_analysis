@@ -94,7 +94,8 @@ def main():
         raise ValueError(f"{args.input} must be a directory or a file!")
 
     # Filter tracks based on quality (length, number of tracks)
-    filter_tracks(trajectory_files, args.min_length)
+
+    client.map(filter_track_single_movie, trajectory_files, min_length=args.min_length)
 
     path = os.path.abspath(args.input)
     trajectory_files = glob.glob(f"{path}/*pure.csv")
