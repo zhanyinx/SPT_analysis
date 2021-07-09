@@ -14,11 +14,16 @@ list_samples = {
     "rousetime": "https://drive.google.com/uc?export=download&id=1aMj2c6TkIN3NfKmRzD6-bCjcUz424Mf8",
 }
 
+systematic_errors = {"rad21": 0.0087, "rousetime": 0.0025}
+
+
 # Take input from user and load file and make a copy
 sample_name = st.sidebar.selectbox(
     "Enter the input file containing the tamsd data.",
     list(list_samples.keys()),
 )
+
+systematic_error = systematic_errors[sample_name]
 
 if not os.path.isfile(f"{sample_name}.csv.zip"):
     sample_link = list_samples[sample_name]
@@ -61,14 +66,8 @@ if not "All" in cell_lines:
 data = data[data["induction_time"].isin(induction_time)]
 data = data[data["motion_correction_type"].isin(correction_type)]
 
-systematic_error = st.sidebar.number_input(
-    "Systematic error (rho) from fixed cells. 2*rho**2 will be subtracted",
-    value=0.086,
-    min_value=0.0,
-    format="%.5f",
-)
-
-data["tamsd"] = data["tamsd"] - 2 * systematic_error ** 2
+if "fixed" not in data["induction_time"].unique():
+    data["tamsd"] = data["tamsd"] - systematic_error
 
 # Options for plot
 pool_clones_replicates = st.sidebar.checkbox("Pool clones and replicates")
@@ -103,7 +102,6 @@ else:
 # Plot
 fig = plt.figure()
 
-std1lag = round(data.groupby(["lags"]).std()["tamsd"].values[0], 4)
 
 if st.checkbox("Plot standard deviation instead of 68 confidence interval"):
     sns.lineplot(
@@ -117,7 +115,17 @@ plt.xscale("log")
 plt.yscale("log")
 plt.xlabel("dt (sec)")
 plt.ylabel("EA-tamsd (um^2)")
-plt.title(f"Std at lag {interval}s (rho for fixed movies) is: {std1lag}")
+
+# Show systematic error
+if ("fixed" in induction_time) and ("fixed" in data["induction_time"].unique()):
+    systematic_error_new = round(
+        data[data["induction_time"] == "fixed"]
+        .groupby(["lags"])
+        .mean()["tamsd"]
+        .values[0],
+        4,
+    )
+    plt.title(f"Systematic error (from selected fixed samples): {systematic_error_new}")
 
 if st.checkbox("Fixed y axis values to [0.01:2]"):
     plt.ylim(0.01, 2)
