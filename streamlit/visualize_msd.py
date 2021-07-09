@@ -24,13 +24,15 @@ sample_name = st.sidebar.selectbox(
     list(list_samples.keys()),
 )
 
+#  Set systematic error from global options
 systematic_error = systematic_errors[sample_name]
 
+# download data if not already present
 if not os.path.isfile(f"{sample_name}.csv.zip"):
     sample_link = list_samples[sample_name]
     gdown.download(sample_link, f"{sample_name}.csv.zip")
 
-
+# load and make a copy of original data
 original_data = load_data(f"{sample_name}.csv.zip")
 data = original_data.copy()
 
@@ -49,7 +51,7 @@ limit = float(
     )
 )
 
-# Select cell lines and induction time to show
+# Select cell lines, induction time and correction type to show
 clines = list(data["cell_line"].unique())
 clines.append("All")
 cell_lines = st.sidebar.multiselect("Choose your cell lines (multiple)", clines)
@@ -60,13 +62,15 @@ correction_type = st.sidebar.multiselect(
     "Choose the motion correction type", list(data["motion_correction_type"].unique())
 )
 
-# Filter data to keep only the selected lines and induction time
+# Filter data to keep only the selected lines, induction time and correction type
 data = data[(data["lags"] <= limit)]
 if not "All" in cell_lines:
     data = data[data["cell_line"].isin(cell_lines)]
 data = data[data["induction_time"].isin(induction_time)]
 data = data[data["motion_correction_type"].isin(correction_type)]
 
+
+# Select type of systematic error correction correction to perform
 avoid_se = st.sidebar.checkbox("Avoid systematic error correction")
 sample_specific_se_correction = st.sidebar.checkbox(
     "Sample specific systematic error correction"
@@ -86,7 +90,10 @@ elif not avoid_se:
 # Options for plot
 pool_clones_replicates = st.checkbox("Pool clones and replicates")
 pool_replicates = st.checkbox("Pool replicates")
-
+standard_deviation = st.checkbox(
+    "Plot standard deviation instead of 68 confidence interval"
+)
+yaxis = st.checkbox("Fixed y axis values to [0.01:2]")
 
 if pool_clones_replicates:
     data["condition"] = [
@@ -115,9 +122,7 @@ else:
 
 # Plot
 fig = plt.figure()
-
-
-if st.checkbox("Plot standard deviation instead of 68 confidence interval"):
+if standard_deviation:
     sns.lineplot(
         data=data, x="lags", y="tamsd", hue="condition", err_style="bars", ci="sd"
     )
@@ -130,23 +135,13 @@ plt.yscale("log")
 plt.xlabel("dt (sec)")
 plt.ylabel("EA-tamsd (um^2)")
 
-# Show systematic error
-if ("fixed" in induction_time) and ("fixed" in data["induction_time"].unique()):
-    systematic_error_new = round(
-        data[data["induction_time"] == "fixed"]
-        .groupby(["lags"])
-        .mean()["tamsd"]
-        .values[0],
-        4,
-    )
-    plt.title(f"Systematic error (from selected fixed samples): {systematic_error_new}")
-
-if st.checkbox("Fixed y axis values to [0.01:2]"):
+if yaxis:
     plt.ylim(0.01, 2)
 
 st.pyplot(fig)
-
 plt.savefig("plot.pdf")
+
+# Dowload options
 st.markdown(
     download_plot(
         "plot.pdf",
@@ -168,34 +163,34 @@ if st.checkbox("Show raw data"):
 
 
 # Create table of alphas and Ds
-if st.checkbox("Show alpha and D?"):
-    df_alphas = pd.DataFrame(data.groupby(["lags", "condition"]).mean()["tamsd"])
-    df_alphas.reset_index(inplace=True)
+st.subheader("Table of alphas and Ds")
+df_alphas = pd.DataFrame(data.groupby(["lags", "condition"]).mean()["tamsd"])
+df_alphas.reset_index(inplace=True)
 
-    # Select the upper limit first range of fit
-    end1 = float(
-        st.number_input(
-            "End of first regime for fitting a and D", value=60.0, step=interval
-        )
+# Select the upper limit first range of fit
+end1 = float(
+    st.number_input(
+        "End of first regime for fitting a and D", value=60.0, step=interval
     )
+)
 
-    # Select the upper limit second range of fit
-    end2 = float(
-        st.number_input(
-            "End of second regime for fitting a and D", value=200.0, step=interval
-        )
+# Select the upper limit second range of fit
+end2 = float(
+    st.number_input(
+        "End of second regime for fitting a and D", value=200.0, step=interval
     )
+)
 
-    df = pd.DataFrame()
-    for condition in df_alphas["condition"].unique():
-        subset = df_alphas[df_alphas["condition"] == condition]
-        res = fit_alpha_d(subset, end1, end2)
-        res["condition"] = condition
-        df = pd.concat([df, res])
-    df["regime"] = df.index
+df = pd.DataFrame()
+for condition in df_alphas["condition"].unique():
+    subset = df_alphas[df_alphas["condition"] == condition]
+    res = fit_alpha_d(subset, end1, end2)
+    res["condition"] = condition
+    df = pd.concat([df, res])
 
-    st.dataframe(df)
-    st.markdown(
-        download_csv(df, "alpha_d.csv", "Download alphas and d table"),
-        unsafe_allow_html=True,
-    )
+# Display and download link of table
+st.dataframe(df)
+st.markdown(
+    download_csv(df, "alpha_d.csv", "Download alphas and d table"),
+    unsafe_allow_html=True,
+)

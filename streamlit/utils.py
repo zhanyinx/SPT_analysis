@@ -26,7 +26,17 @@ def fit_alpha_d(subset: pd.DataFrame, end1: float, end2: float):
     a2, d2 = np.polyfit(np.log10(r2["lags"]), np.log10(r2["tamsd"]), 1)
     a3, d3 = np.polyfit(np.log10(r3["lags"]), np.log10(r3["tamsd"]), 1)
 
-    df = pd.DataFrame({"alphas": [a1, a2, a3], "Ds": [10 ** d1, 10 ** d2, 10 ** d3]})
+    minimum = np.min(r1["lags"])
+    maximum = np.max(r3["lags"])
+    regimes = [f"{minimum}-{end1}", f"{end1}-{end2}", f"{end2}-{maximum}"]
+
+    df = pd.DataFrame(
+        {
+            "alphas": [a1, a2, a3],
+            "Ds": [10 ** d1, 10 ** d2, 10 ** d3],
+            "Regimes": regimes,
+        }
+    )
     return df
 
 
