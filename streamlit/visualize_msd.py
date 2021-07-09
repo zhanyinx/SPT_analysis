@@ -44,9 +44,9 @@ limit = float(
 )
 
 # Select cell lines and induction time to show
-cell_lines = st.sidebar.multiselect(
-    "Choose your cell lines (multiple)", list(data["cell_line"].unique())
-)
+clines = list(data["cell_line"].unique())
+clines.append("All")
+cell_lines = st.sidebar.multiselect("Choose your cell lines (multiple)", clines)
 induction_time = st.sidebar.multiselect(
     "Choose the induction times to keep", list(data["induction_time"].unique())
 )
@@ -56,7 +56,8 @@ correction_type = st.sidebar.multiselect(
 
 # Filter data to keep only the selected lines and induction time
 data = data[(data["lags"] <= limit)]
-data = data[data["cell_line"].isin(cell_lines)]
+if not "All" in cell_lines:
+    data = data[data["cell_line"].isin(cell_lines)]
 data = data[data["induction_time"].isin(induction_time)]
 data = data[data["motion_correction_type"].isin(correction_type)]
 
@@ -101,6 +102,9 @@ else:
 
 # Plot
 fig = plt.figure()
+
+std1lag = round(data.groupby(["lags"]).std()["tamsd"].values[0], 4)
+
 if st.checkbox("Plot standard deviation instead of 68 confidence interval"):
     sns.lineplot(
         data=data, x="lags", y="tamsd", hue="condition", err_style="bars", ci="sd"
@@ -113,6 +117,8 @@ plt.xscale("log")
 plt.yscale("log")
 plt.xlabel("dt (sec)")
 plt.ylabel("EA-tamsd (um^2)")
+plt.title(f"Std at lag {interval}s (rho for fixed movies) is: {std1lag}")
+
 if st.checkbox("Fixed y axis values to [0.01:2]"):
     plt.ylim(0.01, 2)
 
@@ -135,8 +141,7 @@ st.markdown(
 if st.checkbox("Show raw data"):
     res = pd.DataFrame(data.groupby(["lags", "condition"]).mean()["tamsd"])
     res.reset_index(inplace=True)
-    res["sqrtEATAmsd"] = np.sqrt(res["tamsd"])
-    res.columns = ["delay", "condition", "EATAmsd", "sqrtEATAmsd"]
+    res.columns = ["delay", "condition", "EATAmsd"]
     st.dataframe(res)
 
 
