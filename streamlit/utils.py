@@ -30,6 +30,24 @@ def fit_alpha_d(subset: pd.DataFrame, end1: float, end2: float):
     return df
 
 
+def sample_specific_systematic_error(data: pd.DataFrame):
+    """Subtract sample specific systematic error."""
+    for celline in data["cell_line"].unique():
+        subset = data[data["cell_line"] == celline].copy()
+        systematic_error = round(
+            subset[subset["induction_time"] == "fixed"]
+            .groupby(["lags"])
+            .mean()["tamsd"]
+            .values[0],
+            4,
+        )
+        data[data["cell_line"] == celline]["tamsd"] = (
+            data[data["cell_line"] == celline]["tamsd"] - systematic_error
+        )
+    data = data[~(data["induction_time"] == "fixed")]
+    return data
+
+
 def download_plot(download_filename: str, download_link_text: str) -> str:
     """Generates a link to download a plot.
 

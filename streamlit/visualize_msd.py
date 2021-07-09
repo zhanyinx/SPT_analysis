@@ -1,4 +1,5 @@
 import os
+from pandas.core.groupby.generic import AggScalar
 import seaborn as sns
 import matplotlib.pyplot as plt
 
@@ -66,13 +67,25 @@ if not "All" in cell_lines:
 data = data[data["induction_time"].isin(induction_time)]
 data = data[data["motion_correction_type"].isin(correction_type)]
 
-if not st.sidebar.checkbox("Avoid systematic error correction"):
+avoid_se = st.sidebar.checkbox("Avoid systematic error correction")
+sample_specific_se_correction = st.sidebar.checkbox(
+    "Sample specific systematic error correction"
+)
+
+if sample_specific_se_correction:
+    if "fixed" not in data["induction_time"].unique():
+        raise ValueError(
+            "Fixed data must be present to calculate sample specific Error!"
+        )
+    data = sample_specific_systematic_error(data)
+
+elif not avoid_se:
     if "fixed" not in data["induction_time"].unique():
         data["tamsd"] = data["tamsd"] - systematic_error
 
 # Options for plot
-pool_clones_replicates = st.sidebar.checkbox("Pool clones and replicates")
-pool_replicates = st.sidebar.checkbox("Pool replicates")
+pool_clones_replicates = st.checkbox("Pool clones and replicates")
+pool_replicates = st.checkbox("Pool replicates")
 
 
 if pool_clones_replicates:
