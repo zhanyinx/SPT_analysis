@@ -50,11 +50,15 @@ cell_lines = st.sidebar.multiselect(
 induction_time = st.sidebar.multiselect(
     "Choose the induction times to keep", list(data["induction_time"].unique())
 )
+correction_type = st.sidebar.multiselect(
+    "Choose the motion correction type", list(data["motion_correction_type"].unique())
+)
 
 # Filter data to keep only the selected lines and induction time
 data = data[(data["lags"] <= limit)]
 data = data[data["cell_line"].isin(cell_lines)]
 data = data[data["induction_time"].isin(induction_time)]
+data = data[data["motion_correction_type"].isin(correction_type)]
 
 systematic_error = st.sidebar.number_input(
     "Systematic error (rho) from fixed cells. 2*rho**2 will be subtracted",
@@ -66,20 +70,33 @@ systematic_error = st.sidebar.number_input(
 data["tamsd"] = data["tamsd"] - 2 * systematic_error ** 2
 
 # Options for plot
-pool_replicates = st.sidebar.checkbox("Pool replicates")
 pool_clones_replicates = st.sidebar.checkbox("Pool clones and replicates")
+pool_replicates = st.sidebar.checkbox("Pool replicates")
+
 
 if pool_clones_replicates:
-    data["condition"] = data["induction_time"]
+    data["condition"] = [
+        f"itime{time}_{correction}"
+        for time, correction in zip(
+            data["induction_time"], data["motion_correction_type"]
+        )
+    ]
 elif pool_replicates:
     data["condition"] = [
-        f"{cl}_itime{time}"
-        for cl, time in zip(data["cell_line"], data["induction_time"])
+        f"{cl}_itime{time}_{correction}"
+        for cl, time, correction in zip(
+            data["cell_line"], data["induction_time"], data["motion_correction_type"]
+        )
     ]
 else:
     data["condition"] = [
-        f"{d}_{cl}_time{time}"
-        for cl, d, time in zip(data["cell_line"], data["date"], data["induction_time"])
+        f"{d}_{cl}_time{time}_{correction}"
+        for d, cl, time, correction in zip(
+            data["date"],
+            data["cell_line"],
+            data["induction_time"],
+            data["motion_correction_type"],
+        )
     ]
 
 # Plot
