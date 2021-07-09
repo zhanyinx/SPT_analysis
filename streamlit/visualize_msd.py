@@ -66,8 +66,9 @@ if not "All" in cell_lines:
 data = data[data["induction_time"].isin(induction_time)]
 data = data[data["motion_correction_type"].isin(correction_type)]
 
-if "fixed" not in data["induction_time"].unique():
-    data["tamsd"] = data["tamsd"] - systematic_error
+if not st.sidebar.checkbox("Avoid systematic error correction"):
+    if "fixed" not in data["induction_time"].unique():
+        data["tamsd"] = data["tamsd"] - systematic_error
 
 # Options for plot
 pool_clones_replicates = st.sidebar.checkbox("Pool clones and replicates")
