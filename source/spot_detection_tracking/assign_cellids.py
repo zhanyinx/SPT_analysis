@@ -143,7 +143,7 @@ for id in model.getTrackModel().trackIDs(True):
                       mintensity, -1, -1, intensity,
                       -1, -1, -1, snr,cellid])
 #write output
-with open(basedir + "/" + fname + ".tracks.with_cellIDs.csv", "wb") as f:
+with open(basedir + "/" + fname + ".tracks.with_cellIDs_uncorrected.csv", "wb") as f:
     wr = csv.writer(f)
     for row in spots:
         wr.writerow(row)

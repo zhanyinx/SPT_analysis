@@ -83,8 +83,9 @@ def main():
     )  #'/work3/ggiorget/kospave/temp/'})
     client = Client()
 
+    trajectory_files = []
     if os.path.isdir(args.input):
-        trajectory_files = glob.glob(f"{args.input}/*_corrected.csv")
+        trajectory_files.extend(glob.glob(f"{args.input}/*_corrected.csv"))
         if args.uncorrected_residual:
             trajectory_files.extend(glob.glob(f"{args.input}/*_residual.csv"))
             trajectory_files.extend(glob.glob(f"{args.input}/*_uncorrected.csv"))
@@ -94,8 +95,10 @@ def main():
         raise ValueError(f"{args.input} must be a directory or a file!")
 
     # Filter tracks based on quality (length, number of tracks)
-
-    client.map(filter_track_single_movie, trajectory_files, min_length=args.min_length)
+    res = client.map(
+        filter_track_single_movie, trajectory_files, min_length=args.min_length
+    )
+    results = client.gather(res)
 
     path = os.path.abspath(args.input)
     trajectory_files = glob.glob(f"{path}/*pure.csv")
@@ -121,7 +124,6 @@ def main():
     df.to_csv(args.output, index=False)
     # Stop parallelization
     client.close()
-    print("Fast version took", time.time() - t0)
 
 
 if __name__ == "__main__":
