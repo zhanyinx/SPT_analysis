@@ -116,6 +116,5 @@ def main():
     # Stop parallelization
     client.close()
 
-
 if __name__ == "__main__":
     main()

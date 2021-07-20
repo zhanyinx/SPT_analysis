@@ -15,9 +15,9 @@ def angle_between(v1, v2):
     v2_u = unit_vector(v2)
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
-def calculate_directions_single_track(single_traj: pd.DataFrame, dt: int = 1):
+def calculate_directions_single_track(single_traj: pd.DataFrame, dt: int = 1, time_step: float = 10):
     """ Calculate distribution of angles for a particular dt.
-    dt in arbitrary units, i.e. 0,1,2... 
+    dt in arbitrary units, [1,5,10,15,20]. 
     If an appropriate frame is missing than simply do not 
     calculate any angle for a particular pairs of points.
 
@@ -26,6 +26,7 @@ def calculate_directions_single_track(single_traj: pd.DataFrame, dt: int = 1):
     outputs:
         distribution of angles for a particular track
     """
+    dts = [1,5,10,15,20]
     angles = []
     Ds = []
     slopes = []
@@ -70,7 +71,7 @@ def calculate_directions_single_track(single_traj: pd.DataFrame, dt: int = 1):
         ])
 
 # calculate slope and intercept (D) for MSD using shift vectors (v1, v2) and v3
-        x=np.arange(1,3)*dt
+        x=np.arange(1,3)*dt*time_step
         y=np.zeros(2)
         y[0] = np.mean(
             np.sum(
@@ -92,11 +93,11 @@ def calculate_directions_single_track(single_traj: pd.DataFrame, dt: int = 1):
 
 # create dataframe using lists
     df = pd.DataFrame({"dt": dt, "start": time_start, "end": time_end, "angle": angles, "D": Ds, "slope": slopes})
-    df["cell_id"] = single_traj["cell"]
-    df["track_id"] = single_traj["track"]
+    df["cell_id"] = single_traj["cell"].unique()[0]
+    df["track_id"] = single_traj["track"].unique()[0]
     return df
 
-def calculate_directions_all(traj_file: str, min_length: int = 10):
+def calculate_directions_all(traj_file: str, min_length: int = 10, time_step: float = 10):
     """Calculate all time average MSD given a movie and return a DataFrame containing them.
 
     Inputs:
@@ -104,7 +105,7 @@ def calculate_directions_all(traj_file: str, min_length: int = 10):
         min_length: minimum length of trajectory accepted.
 
     Return:
-        results: pd.DataFrame containing all time average MSD given the trajectories of a movie.
+        results: pd.DataFrame containing angles, 3-point track (D, alpha) of a movie.
     """
 
     # Read data from trajectory file
@@ -121,8 +122,8 @@ def calculate_directions_all(traj_file: str, min_length: int = 10):
         # filter on too short tracks
         if len(single_traj) < min_length:
             continue
-
-        df_tmp = calculate_directions_single_track(single_traj, dt = 1)
+        for delta_t in [1,5,10,15,20]:
+            df_tmp = calculate_directions_single_track(single_traj, dt = delta_t)
         results = pd.concat([results, df_tmp])
 
     results["traj_file"] = os.path.basename(traj_file)
@@ -177,7 +178,6 @@ def filter_track_single_movie(filename, min_length=10):
         pure_df[["track", "x", "y", "z", "frame", "cell"]].to_csv(
             filename + "pure.csv", index=False
         )
-
 
 def filter_tracks(list_files: list, min_length: int = 10):
     """Given folder of tracks, performs quality filters on all tracks,

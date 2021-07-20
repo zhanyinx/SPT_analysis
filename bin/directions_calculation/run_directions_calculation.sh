@@ -21,7 +21,7 @@ function help {
     echo "   -i|--input INPUT : input folder or single file containing the *_corrected.csv files from TrackMate or motion correction."
     echo "   -s|--scriptpath SCRIPTPATH : path to SPT analysis github folder path"
     echo "   [-l|--min_length MIN_LENGTH] : Minimum number of timepoints per trajectory, default 10."
-    echo "   [-o|--output OUTPUT] : output csv name, default output.csv"
+    echo "   [-o|--output OUTPUT] : output csv name, default angle_d_alpha.csv"
     echo "   [-t|--tmp TMP] : scratch folder for temporary file, default ./scratch"
     echo "   [-u|--uncorrected_residual]: if defined, it will look for *_uncorrected.csv and *_residual.csv files and output them in the results."
     echo "   [-h|--help]: help"
@@ -46,7 +46,7 @@ done
 input=""
 pathSPT=""
 min_length=10
-output="output.csv"
+output="angle_d_alpha.csv"
 tmp="./scratch"
 uncorrected_residual=1
 
