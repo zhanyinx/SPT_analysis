@@ -80,7 +80,7 @@ def main():
     dask.config.set(shuffle="disk")
     dask.config.set(
         {"temporary_directory": args.tmp}
-    )  #'/work3/ggiorget/kospave/temp/'})
+    ) 
     client = Client()
 
     trajectory_files = []
