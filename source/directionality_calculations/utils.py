@@ -5,20 +5,25 @@ import sys
 import numpy as np
 import pandas as pd
 
+
 def unit_vector(vector):
-    """ Returns the unit vector of the vector.  """
+    """Returns the unit vector of the vector."""
     return vector / np.linalg.norm(vector)
 
+
 def angle_between(v1, v2):
-    """ Returns the angle in radians between vectors 'v1' and 'v2'. """
+    """Returns the angle in radians between vectors 'v1' and 'v2'."""
     v1_u = unit_vector(v1)
     v2_u = unit_vector(v2)
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
-def calculate_directions_single_track(single_traj: pd.DataFrame, dt: int = 1, time_step: float = 10):
-    """ Calculate distribution of angles for a particular dt.
-    dt in arbitrary units. 
-    If an appropriate frame is missing than simply do not 
+
+def calculate_directions_single_track(
+    single_traj: pd.DataFrame, dt: int = 1, time_step: float = 10
+):
+    """Calculate distribution of angles for a particular dt.
+    dt in arbitrary units.
+    If an appropriate frame is missing than simply do not
     calculate any angle.
 
     inputs:
@@ -32,71 +37,90 @@ def calculate_directions_single_track(single_traj: pd.DataFrame, dt: int = 1, ti
     time_start = []
     time_end = []
     for t in single_traj.frame.values:
-# assign 
-# i -> t
-# j -> t + dt
-# k -> t + 2 * dt
-        if (np.count_nonzero(single_traj.frame.values == t) == 1):
+        # assign
+        # i -> t
+        # j -> t + dt
+        # k -> t + 2 * dt
+        if np.count_nonzero(single_traj.frame.values == t) == 1:
             i = single_traj.index[single_traj.frame == t][0]
         else:
             continue
-        if (np.count_nonzero(single_traj.frame.values == t + dt) == 1):
+        if np.count_nonzero(single_traj.frame.values == t + dt) == 1:
             j = single_traj.index[single_traj.frame == t + dt][0]
         else:
             continue
-        if (np.count_nonzero(single_traj.frame.values == t + 2*dt) == 1):
-            k = single_traj.index[single_traj.frame == t + 2*dt][0]
+        if np.count_nonzero(single_traj.frame.values == t + 2 * dt) == 1:
+            k = single_traj.index[single_traj.frame == t + 2 * dt][0]
         else:
             continue
-# create vectors v1 = (j-i) and v2 = (k-j)
-        v1 = np.array([
-            single_traj.loc[j].x - single_traj.loc[i].x,
-            single_traj.loc[j].y - single_traj.loc[i].y,
-            single_traj.loc[j].z - single_traj.loc[i].z,
-        ])
-        v2 = np.array([
-            single_traj.loc[k].x - single_traj.loc[j].x,
-            single_traj.loc[k].y - single_traj.loc[j].y,
-            single_traj.loc[k].z - single_traj.loc[j].z,
-        ])
-# calculate angle between v1 and v2
-        angles.append(angle_between(v1, v2)/np.pi*180)
+        # create vectors v1 = (j-i) and v2 = (k-j)
+        v1 = np.array(
+            [
+                single_traj.loc[j].x - single_traj.loc[i].x,
+                single_traj.loc[j].y - single_traj.loc[i].y,
+                single_traj.loc[j].z - single_traj.loc[i].z,
+            ]
+        )
+        v2 = np.array(
+            [
+                single_traj.loc[k].x - single_traj.loc[j].x,
+                single_traj.loc[k].y - single_traj.loc[j].y,
+                single_traj.loc[k].z - single_traj.loc[j].z,
+            ]
+        )
+        # calculate angle between v1 and v2
+        angles.append(angle_between(v1, v2) / np.pi * 180)
 
-# calculate vector v3 = (k-i)
-        v3 = np.array([
-            single_traj.loc[k].x - single_traj.loc[i].x,
-            single_traj.loc[k].y - single_traj.loc[i].y,
-            single_traj.loc[k].z - single_traj.loc[i].z,
-        ])
+        # calculate vector v3 = (k-i)
+        v3 = np.array(
+            [
+                single_traj.loc[k].x - single_traj.loc[i].x,
+                single_traj.loc[k].y - single_traj.loc[i].y,
+                single_traj.loc[k].z - single_traj.loc[i].z,
+            ]
+        )
 
-# calculate slope and intercept (D) for MSD using shift vectors (v1, v2) and v3
-        x=np.arange(1,3)*dt*time_step
-        y=np.zeros(2)
+        # calculate slope and intercept (D) for MSD using shift vectors (v1, v2) and v3
+        x = np.arange(1, 3) * dt * time_step
+        y = np.zeros(2)
         y[0] = np.mean(
             np.sum(
-                [v1**2, v2**2],
+                [v1 ** 2, v2 ** 2],
+                axis=1,
             ),
         )
         y[1] = np.mean(
-            np.sum(v3**2),
+            np.sum(v3 ** 2),
         )
         x = np.log10(x)
         y = np.log10(y)
         slope, lgD = np.polyfit(x, y, 1)
 
-# add slope, D, timestep to the corresponding list
+        # add slope, D, timestep to the corresponding list
         slopes.append(slope)
-        Ds.append(10**lgD)
+        Ds.append(10 ** lgD)
         time_start.append(t)
         time_end.append(t + 2 * dt)
 
-# create dataframe using lists
-    df = pd.DataFrame({"dt": dt, "start": time_start, "end": time_end, "angle": angles, "D": Ds, "slope": slopes})
+    # create dataframe using lists
+    df = pd.DataFrame(
+        {
+            "dt": dt,
+            "start": time_start,
+            "end": time_end,
+            "angle": angles,
+            "D": Ds,
+            "slope": slopes,
+        }
+    )
     df["cell_id"] = single_traj["cell"].unique()[0]
     df["track_id"] = single_traj["track"].unique()[0]
     return df
 
-def calculate_directions_all(traj_file: str, min_length: int = 10, time_step: float = 10):
+
+def calculate_directions_all(
+    traj_file: str, min_length: int = 10, time_step: float = 10
+):
     """Calculate all time average MSD given a movie and return a DataFrame containing them.
 
     Inputs:
@@ -121,13 +145,14 @@ def calculate_directions_all(traj_file: str, min_length: int = 10, time_step: fl
         # filter on too short tracks
         if len(single_traj) < min_length:
             continue
-        for delta_t in [1,5,10,15,20]:
-            df_tmp = calculate_directions_single_track(single_traj, dt = delta_t)
+        for delta_t in [1, 5, 10, 15, 20]:
+            df_tmp = calculate_directions_single_track(single_traj, dt=delta_t)
             results = pd.concat([results, df_tmp])
 
     results["traj_file"] = os.path.basename(traj_file)
-    
+
     return results
+
 
 def filter_track_single_movie(filename, min_length=10):
     """
@@ -177,6 +202,7 @@ def filter_track_single_movie(filename, min_length=10):
         pure_df[["track", "x", "y", "z", "frame", "cell"]].to_csv(
             filename + "pure.csv", index=False
         )
+
 
 def filter_tracks(list_files: list, min_length: int = 10):
     """Given folder of tracks, performs quality filters on all tracks,

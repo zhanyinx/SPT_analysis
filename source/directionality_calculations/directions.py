@@ -67,9 +67,7 @@ def main():
 
     # Start parallelization
     dask.config.set(shuffle="disk")
-    dask.config.set(
-        {"temporary_directory": args.tmp}
-    ) 
+    dask.config.set({"temporary_directory": args.tmp})
     client = Client()
 
     trajectory_files = []
@@ -111,6 +109,7 @@ def main():
     df.to_csv(args.output, index=False)
     # Stop parallelization
     client.close()
+
 
 if __name__ == "__main__":
     main()
