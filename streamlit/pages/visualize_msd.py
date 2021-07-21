@@ -3,7 +3,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 from .utils import *
-from .dictionary import LIST_SAMPLES
+from .dictionary import LIST_SAMPLES, SYSTEMATIC_ERRORS
 
 
 def visualize_msd():
@@ -12,8 +12,7 @@ def visualize_msd():
 
     # Samples
     list_samples = LIST_SAMPLES
-
-    systematic_errors = {"rad21": 0.0087, "rousetime": 0.0025}
+    systematic_errors = SYSTEMATIC_ERRORS
 
     # Take input from user and load file and make a copy
     sample_name = st.sidebar.selectbox(

@@ -8,3 +8,5 @@ PAGES = {
     "Rouse and error tables": "tables",
     "Mean square displacement analysis": "msd",
 }
+
+SYSTEMATIC_ERRORS = {"rad21": 0.0087, "rousetime": 0.0025}
