@@ -7,7 +7,7 @@ from .utils import *
 
 def visualize_msd():
     # Set title
-    st.title("MSD visualisation app")
+    st.title("Mean square displacement analysis")
 
     # Samples
     list_samples = {
