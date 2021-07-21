@@ -3,6 +3,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 from .utils import *
+from .dictionary import LIST_SAMPLES
 
 
 def visualize_msd():
@@ -10,10 +11,7 @@ def visualize_msd():
     st.title("Mean square displacement analysis")
 
     # Samples
-    list_samples = {
-        "rad21": "https://drive.google.com/uc?export=download&id=1UHfqftidv1MKOtnzhyXHNKVFQZPKIj2Z",
-        "rousetime": "https://drive.google.com/uc?export=download&id=1aMj2c6TkIN3NfKmRzD6-bCjcUz424Mf8",
-    }
+    list_samples = LIST_SAMPLES
 
     systematic_errors = {"rad21": 0.0087, "rousetime": 0.0025}
 

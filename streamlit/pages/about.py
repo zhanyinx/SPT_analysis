@@ -9,6 +9,8 @@ def about():
         """
 		What you can find:
 		
+        - Display systematic error and rouse time tables
+
 		- Mean square displacement analysis 
 
 		- Distribution of displacement angles
