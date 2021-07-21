@@ -135,7 +135,6 @@ def filter_track_single_movie(filename, min_length=10, max_num_trajs_per_cell=10
             filename + "pure.csv", index=False
         )
 
-
 def filter_tracks(list_files: list, min_length: int = 10):
     """Given folder of tracks, performs quality filters on all tracks,
     see filter_track_single_movie function for more info."""

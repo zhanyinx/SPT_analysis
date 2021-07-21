@@ -104,7 +104,7 @@ def calculate_directions_all(traj_file: str, min_length: int = 10, time_step: fl
         min_length: minimum length of trajectory accepted.
 
     Return:
-        results: pd.DataFrame containing angles, 3-point track (D, alpha) of a movie.
+        results: pd.DataFrame containing angles, (D, alpha) for a 3-point piece of a track.
     """
 
     # Read data from trajectory file
@@ -123,7 +123,7 @@ def calculate_directions_all(traj_file: str, min_length: int = 10, time_step: fl
             continue
         for delta_t in [1,5,10,15,20]:
             df_tmp = calculate_directions_single_track(single_traj, dt = delta_t)
-        results = pd.concat([results, df_tmp])
+            results = pd.concat([results, df_tmp])
 
     results["traj_file"] = os.path.basename(traj_file)
     
