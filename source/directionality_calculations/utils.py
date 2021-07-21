@@ -17,16 +17,15 @@ def angle_between(v1, v2):
 
 def calculate_directions_single_track(single_traj: pd.DataFrame, dt: int = 1, time_step: float = 10):
     """ Calculate distribution of angles for a particular dt.
-    dt in arbitrary units, [1,5,10,15,20]. 
+    dt in arbitrary units. 
     If an appropriate frame is missing than simply do not 
-    calculate any angle for a particular pairs of points.
+    calculate any angle.
 
     inputs:
         single track in a DataFrame format, containing [x, y, z, frame]
     outputs:
         distribution of angles for a particular track
     """
-    dts = [1,5,10,15,20]
     angles = []
     Ds = []
     slopes = []
