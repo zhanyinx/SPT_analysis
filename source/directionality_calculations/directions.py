@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import argparse
 import re
-import time
 
 from utils import *
 
@@ -60,8 +59,6 @@ def _parse_args():
 
 def main():
     """Calculate angles, D, alpha for a given trajectory file."""
-    t0 = time.time()
-
     # Parse input
     args = _parse_args()
 
@@ -90,7 +87,6 @@ def main():
     res = client.map(
         filter_track_single_movie, trajectory_files, min_length=args.min_length
     )
-    results = client.gather(res)
 
     path = os.path.abspath(args.input)
     trajectory_files = glob.glob(f"{path}/*pure.csv")

@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import argparse
 import re
-import time
 
 from utils import *
 
@@ -68,8 +67,6 @@ def _parse_args():
 
 def main():
     """Calculate MSD given trajectory file."""
-    t0 = time.time()
-
     # Parse input
     args = _parse_args()
 
