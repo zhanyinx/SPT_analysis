@@ -9,7 +9,7 @@ def about():
         """
 		What you can find:
 		
-        - Display systematic error and rouse time tables
+		- Display systematic error and rouse time tables
 
 		- Mean square displacement analysis 
 
