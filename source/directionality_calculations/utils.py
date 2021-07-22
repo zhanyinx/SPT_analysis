@@ -89,9 +89,7 @@ def calculate_directions_single_track(
                 axis=1,
             ),
         )
-        y[1] = np.mean(
-            np.sum(v3 ** 2),
-        )
+        y[1] = np.sum(v3 ** 2)
         x = np.log10(x)
         y = np.log10(y)
         slope, lgD = np.polyfit(x, y, 1)
