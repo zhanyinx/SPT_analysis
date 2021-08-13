@@ -25,7 +25,7 @@ function help {
     echo "   [-t|--tmp TMP] : scratch folder for temporary file, default ./scratch"
     echo "   [-u|--uncorrected_residual]: if defined, it will look for *_uncorrected.csv and *_residual.csv files and output them in the results."
     echo "   [-h|--help]: help"
-    exit;
+    exit 1;
 }
 
 
@@ -88,6 +88,8 @@ if ! [ -d $pathSPT ]; then
     echo "$pathSPT does not exist!"
     exit
 fi
+
+echo "path to SPT $pathSPT input path $input"
 
 if [ $uncorrected_residual -eq 1 ]; then
     python $pathSPT/source/directionality_calculations/directions.py -i $input -ml $min_length -o $output -t $tmp
