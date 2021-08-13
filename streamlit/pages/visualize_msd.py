@@ -130,8 +130,8 @@ def visualize_msd():
         )
     plt.xscale("log")
     plt.yscale("log")
-    plt.xlabel("dt (sec)")
-    plt.ylabel("EA-tamsd (um^2)")
+    plt.xlabel(r"$\Delta$t, sec")
+    plt.ylabel(r"EA-tamsd, $\mu$m$^2$)")
 
     if yaxis:
         plt.ylim(0.01, 2)
