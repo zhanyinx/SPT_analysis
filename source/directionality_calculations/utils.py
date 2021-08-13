@@ -105,7 +105,6 @@ def calculate_directions_single_track(
         {
             "dt": dt,
             "start": time_start,
-            "end": time_end,
             "angle": angles,
             "D": Ds,
             "slope": slopes,

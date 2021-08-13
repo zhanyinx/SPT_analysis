@@ -58,7 +58,7 @@ def _parse_args():
 
 
 def main():
-    """Calculate angles, D, alpha for a given trajectory file."""
+    """Calculate angles, D, alpha for a 3-point pieces of a given trajectory file."""
     # Parse input
     args = _parse_args()
 
@@ -106,6 +106,7 @@ def main():
         r"(20[0-9]*)_[\w\W_]*?([^_]*)_([^_]*)_[\d]*?[perc_]*?([0-9])_[\w\W]*?_([\w]*)\.csvpure",
         expand=True,
     )
+    df.drop(["traj_file"], axis=1, inplace=True)
     df.to_csv(args.output, index=False)
     # Stop parallelization
     client.close()
