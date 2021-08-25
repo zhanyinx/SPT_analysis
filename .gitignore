@@ -4,6 +4,7 @@ __pycache__
 *.zip
 *.csv
 *.pdf
+*.png
 bin/directions_calculation/plot_angle_distr.py
 source/directionality_calculations/dev.py
 source/directionality_calculations/dev.py
