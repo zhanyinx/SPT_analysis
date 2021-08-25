@@ -15,7 +15,10 @@ def systematic_error_table(list_samples):
             gdown.download(sample_link, f"{sample_name}.csv.zip")
 
         # load and make a copy of original data
-        original_data = load_data(f"{sample_name}.csv.zip")
+        try:
+            original_data = load_data(f"{sample_name}.csv.zip")
+        except:
+            continue
         data = original_data.copy()
 
         tmp_df = pd.DataFrame()
