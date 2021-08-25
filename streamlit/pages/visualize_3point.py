@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import pickle
 
 from .utils import *
-from .dictionary import LIST_SAMPLES, SYSTEMATIC_ERRORS
+from .dictionary import PICKLED_DFS, SYSTEMATIC_ERRORS
 
 
 def visualize_3point():
@@ -13,7 +13,7 @@ def visualize_3point():
     st.title(r"3-point segment analysis: angle, $\alpha$, D.")
 
     # Samples
-    list_samples = LIST_SAMPLES
+    list_samples = PICKLED_DFS
 
     # Take input from user and load file and make a copy
     sample_name = "directionality"
@@ -45,10 +45,11 @@ def visualize_3point():
         cell_lines.append(j)
         induction_times.append(k)
 
+    times = list(map(str, sorted(list(map(int, list(set(dts)))))))
+    treatment = sorted(set(induction_times))
     if rad21_cells:
         conditions = ["TetO", "3xCTCF", "Cre", "Tir1"]
-        times = list(map(str, sorted(list(map(int, list(set(dts)))))))
-        treatment = sorted(set(induction_times))
+
         chosen_cell_lines1 = st.sidebar.multiselect(
             "TetO cell lines", ["1B5", "1G7", "2G9"]
         )
