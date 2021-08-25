@@ -36,6 +36,7 @@ def calculate_directions_single_track(
     slopes = []
     time_start = []
     time_end = []
+    displacements = []
     for t in single_traj.frame.values:
         # assign
         # i -> t
@@ -90,6 +91,7 @@ def calculate_directions_single_track(
             ),
         )
         y[1] = np.sum(v3 ** 2)
+        loc_displacement = y[1]
         x = np.log10(x)
         y = np.log10(y)
         slope, lgD = np.polyfit(x, y, 1)
@@ -99,6 +101,7 @@ def calculate_directions_single_track(
         Ds.append(10 ** lgD)
         time_start.append(t)
         time_end.append(t + 2 * dt)
+        displacements.append(np.sqrt(loc_displacement))
 
     # create dataframe using lists
     df = pd.DataFrame(
@@ -108,6 +111,7 @@ def calculate_directions_single_track(
             "angle": angles,
             "D": Ds,
             "slope": slopes,
+            "displacement": displacements,
         }
     )
     df["cell_id"] = single_traj["cell"].unique()[0]

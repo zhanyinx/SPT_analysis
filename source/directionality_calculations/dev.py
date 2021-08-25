@@ -48,19 +48,22 @@ def angle_between_vectors(vec1, vec2):
     return np.arccos(np.dot(vec1,vec2)/(np.linalg.norm(vec1)*np.linalg.norm(vec2)))
 dt = 10
 distr = []
-distr2 = []
-# loop over single traj, -2 because we need 3 points to calculate the angle
+# loop over single traj
 init = time.time()
-for i in range(len(single_traj)):
-    if (np.count_nonzero(single_traj.frame.values == single_traj.loc[i].frame + dt) == 1):
-        j = single_traj.index[single_traj.frame == single_traj.loc[i].frame + dt][0]
+for t in single_traj.frame.values:
+    if (np.count_nonzero(single_traj.frame.values == t) == 1):
+        i = single_traj.index[single_traj.frame == t][0]
     else:
         continue
-    if (np.count_nonzero(single_traj.frame.values == single_traj.loc[i].frame + 2*dt) == 1):
-        k = single_traj.index[single_traj.frame == single_traj.loc[i].frame + 2*dt][0]
+    if (np.count_nonzero(single_traj.frame.values == t + dt) == 1):
+        j = single_traj.index[single_traj.frame == t + dt][0]
     else:
         continue
-    print (i, j, k)
+    if (np.count_nonzero(single_traj.frame.values == t + 2*dt) == 1):
+        k = single_traj.index[single_traj.frame == t + 2*dt][0]
+    else:
+        continue
+
     v1 = [
         single_traj.loc[j].x - single_traj.loc[i].x,
         single_traj.loc[j].y - single_traj.loc[i].y,
@@ -77,10 +80,6 @@ print ("stackoverflow ", time.time() - init)
 import matplotlib.pyplot as plt
 
 plt.hist(distr, bins=180)
-plt.show()
-plt.clf()
-
-plt.hist(distr2, bins=180)
 plt.show()
 plt.clf()
 
