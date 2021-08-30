@@ -119,6 +119,7 @@ spots = [['Label', 'ID', 'TRACK_ID', 'QUALITY', 'POSITION_X', 'POSITION_Y',
 
 # Export as csv
 # Get spot coordinate and id
+
 for id in model.getTrackModel().trackIDs(True):
    
        
@@ -135,7 +136,7 @@ for id in model.getTrackModel().trackIDs(True):
         intensity=spot.getFeature('TOTAL_INTENSITY')
         mintensity=spot.getFeature('MEDIAN_INTENSITY')
         snr=spot.getFeature('SNR') 
-        cellid=spot.getFeature('MANUAL_INTEGER_SPOT_FEATURE')
+        cellid=featureModel.getTrackFeature(id, 'MANUAL_INTEGER_TRACK_FEATURE')
     	spots.append(["ID" + str(sid) , sid, id, q, x, y, 
                       z, t, f, -1 , -1, 
                       -1, -1,
