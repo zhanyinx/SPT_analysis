@@ -9,9 +9,11 @@ import pandas as pd
 
 # load data and cache it
 @st.cache
-def load_data(data: str):
+def load_data(data: str, interval: float = None):
     """Load data from csv file using pandas."""
     df = pd.read_csv(data)
+    if interval is not None:
+        df["lags"] = df["lags"] * interval
     return df
 
 

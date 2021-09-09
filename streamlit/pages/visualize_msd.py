@@ -28,20 +28,19 @@ def visualize_msd():
         sample_link = list_samples[sample_name]
         gdown.download(sample_link, f"{sample_name}.csv.zip")
 
-    # load and make a copy of original data
-    original_data = load_data(f"{sample_name}.csv.zip")
-    data = original_data.copy()
-
     # Take input from user for time resultion of acquisition
     interval = float(st.sidebar.text_input("Acquisition time resolution", "10"))
-    data["lags"] = data["lags"] * interval
+
+    # load and make a copy of original data
+    original_data = load_data(f"{sample_name}.csv.zip", interval)
+    data = original_data.copy()
 
     # Select the upper limit for trustable data
     limit = float(
         st.sidebar.slider(
             "Until where you trust the data (in second)?",
             min_value=0.0,
-            max_value=max(data["lags"]),
+            max_value=2000.0,
             value=500.0,
             step=interval,
         )
@@ -122,7 +121,12 @@ def visualize_msd():
     fig = plt.figure()
     if standard_deviation:
         sns.lineplot(
-            data=data, x="lags", y="tamsd", hue="condition", err_style="bars", ci="sd"
+            data=data,
+            x="lags",
+            y="tamsd",
+            hue="condition",
+            err_style="bars",
+            ci="sd",
         )
     else:
         sns.lineplot(
