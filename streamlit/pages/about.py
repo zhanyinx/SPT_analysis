@@ -7,13 +7,19 @@ def about():
     )
     st.markdown(
         """
-		What you can find:
+		### What you can find:
 		
 		- Display systematic error and rouse time tables
 
 		- Mean square displacement analysis 
 
 		- Distribution of displacement angles
+
+        ### Abbreviation
+        
+        - EATAmsd: ensamble averaged time averaged mean square displacement
+        
+        - tamsd: time averaged mean square displacement
 		
 		"""
     )
