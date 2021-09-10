@@ -29,13 +29,25 @@ def systematic_error_table(list_samples):
             subset = data[data["cell_line"] == celline].copy()
 
             # calculate systematic error
-            systematic_error = round(
-                subset[subset["induction_time"] == "fixed"]
-                .groupby(["lags"])
-                .mean()["tamsd"]
-                .values[0],
-                4,
-            )
+            try:
+                systematic_error = round(
+                    subset[
+                        (subset["induction_time"] == "fixed")
+                        & (subset["motion_correction_type"] == "cellIDs_corrected")
+                    ]
+                    .groupby(["lags"])
+                    .mean()["tamsd"]
+                    .values[0],
+                    4,
+                )
+            except:
+                systematic_error = round(
+                    subset[(subset["induction_time"] == "fixed")]
+                    .groupby(["lags"])
+                    .mean()["tamsd"]
+                    .values[0],
+                    4,
+                )
 
             # Keep systematic error in a temporary df
             tmp = pd.DataFrame(

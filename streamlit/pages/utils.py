@@ -46,13 +46,25 @@ def sample_specific_systematic_error(data: pd.DataFrame):
     """Subtract sample specific systematic error."""
     for celline in data["cell_line"].unique():
         subset = data[data["cell_line"] == celline].copy()
-        systematic_error = round(
-            subset[subset["induction_time"] == "fixed"]
-            .groupby(["lags"])
-            .mean()["tamsd"]
-            .values[0],
-            4,
-        )
+        try:
+            systematic_error = round(
+                subset[
+                    (subset["induction_time"] == "fixed")
+                    & (subset["motion_correction_type"] == "cellIDs_corrected")
+                ]
+                .groupby(["lags"])
+                .mean()["tamsd"]
+                .values[0],
+                4,
+            )
+        except:
+            systematic_error = round(
+                subset[(subset["induction_time"] == "fixed")]
+                .groupby(["lags"])
+                .mean()["tamsd"]
+                .values[0],
+                4,
+            )
         data[data["cell_line"] == celline]["tamsd"] = (
             data[data["cell_line"] == celline]["tamsd"] - systematic_error
         )
