@@ -5,6 +5,7 @@ import sys
 import numpy as np
 import pandas as pd
 
+
 def calculate_single_tamsd(single_traj: pd.DataFrame, min_points: int = 10):
     """Calculate trajectory average MSD at all lags.
 
@@ -24,7 +25,7 @@ def calculate_single_tamsd(single_traj: pd.DataFrame, min_points: int = 10):
     final_lags = []
     tamsd = []
     # Loop over lags
-    for lag in lags:        
+    for lag in lags:
         # find indexes of pairs of timepoints with lag equal to the selected lag
         x, y = np.where(tvalues == lag)
 
@@ -45,8 +46,8 @@ def calculate_single_tamsd(single_traj: pd.DataFrame, min_points: int = 10):
         tamsd.append(tmp_tamsd)
 
     df = pd.DataFrame({"lags": final_lags, "tamsd": tamsd})
-    df["cellid"] = single_traj["cell"]
-    
+    df["cellid"] = single_traj["cell"].values[0]
+
     return df
 
 
@@ -81,7 +82,7 @@ def calculate_all_tamsd(traj_file: str, min_points: int = 10, min_length: int = 
         results = pd.concat([results, df_tmp])
 
     results["traj_file"] = os.path.basename(traj_file)
-    
+
     return results
 
 
@@ -134,6 +135,7 @@ def filter_track_single_movie(filename, min_length=10, max_num_trajs_per_cell=10
         pure_df[["track", "x", "y", "z", "frame", "cell"]].to_csv(
             filename + "pure.csv", index=False
         )
+
 
 def filter_tracks(list_files: list, min_length: int = 10):
     """Given folder of tracks, performs quality filters on all tracks,
