@@ -50,19 +50,22 @@ def visualize_msd():
     clines = list(data["cell_line"].unique())
     clines.append("All")
     cell_lines = st.sidebar.multiselect("Choose your cell lines (multiple)", clines)
-    induction_time = st.sidebar.multiselect(
-        "Choose the induction times to keep", list(data["induction_time"].unique())
-    )
-    correction_type = st.sidebar.multiselect(
-        "Choose the motion correction type",
-        list(data["motion_correction_type"].unique()),
-    )
 
     # Filter data to keep only the selected lines, induction time and correction type
     data = data[(data["lags"] <= limit)]
     if not "All" in cell_lines:
         data = data[data["cell_line"].isin(cell_lines)]
+
+    induction_time = st.sidebar.multiselect(
+        "Choose the induction times to keep", list(data["induction_time"].unique())
+    )
+
     data = data[data["induction_time"].isin(induction_time)]
+
+    correction_type = st.sidebar.multiselect(
+        "Choose the motion correction type",
+        list(data["motion_correction_type"].unique()),
+    )
     data = data[data["motion_correction_type"].isin(correction_type)]
 
     # Select type of systematic error correction correction to perform
@@ -183,11 +186,19 @@ def visualize_msd():
     )
 
     df = pd.DataFrame()
-    for condition in df_alphas["condition"].unique():
-        subset = df_alphas[df_alphas["condition"] == condition]
-        res = fit_alpha_d(subset, end1, end2)
-        res["condition"] = condition
-        df = pd.concat([df, res])
+
+    if st.checkbox("Use average data to fit"):
+        for condition in df_alphas["condition"].unique():
+            subset = df_alphas[df_alphas["condition"] == condition]
+            res = fit_alpha_d(subset, end1, end2)
+            res["condition"] = condition
+            df = pd.concat([df, res])
+    else:
+        for condition in data["condition"].unique():
+            subset = data[data["condition"] == condition]
+            res = fit_alpha_d(subset, end1, end2)
+            res["condition"] = condition
+            df = pd.concat([df, res])
 
     # Display and download link of table
     st.dataframe(df)
