@@ -92,6 +92,7 @@ def visualize_msd():
         "Plot standard deviation instead of 68 confidence interval"
     )
     yaxis = st.checkbox("Fixed y axis values to [0.01:2]")
+    laura = st.checkbox("Pool cells from same date (Laura data)")
 
     if pool_clones_replicates:
         data["condition"] = [
@@ -120,10 +121,24 @@ def visualize_msd():
             )
         ]
 
+    if laura:
+        try:
+            data["condition"] = [
+                f"{d}_{cl}_time{time}_{correction}"
+                for d, cl, time, correction in zip(
+                    data["rep"],
+                    data["cell_line"],
+                    data["induction_time"],
+                    data["motion_correction_type"],
+                )
+            ]
+        except:
+            pass
+
     # Plot
     fig = plt.figure()
     if standard_deviation:
-        sns.lineplot(
+        ax = sns.lineplot(
             data=data,
             x="lags",
             y="tamsd",
@@ -132,18 +147,21 @@ def visualize_msd():
             ci="sd",
         )
     else:
-        sns.lineplot(
+        ax = sns.lineplot(
             data=data, x="lags", y="tamsd", hue="condition", err_style="bars", ci=68
         )
+
     plt.xscale("log")
     plt.yscale("log")
     plt.xlabel(r"$\Delta$t, sec")
     plt.ylabel(r"EA-tamsd, $\mu$m$^2$)")
+    ax.legend(fontsize=5)
 
     if yaxis:
         plt.ylim(0.01, 2)
 
     st.pyplot(fig)
+    plt.show()
     plt.savefig("plot.pdf")
 
     # Dowload options
