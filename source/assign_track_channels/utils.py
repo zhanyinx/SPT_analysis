@@ -12,6 +12,31 @@ FRAME = "FRAME"
 CELLID = "CELLID"
 
 
+def drop_matched(matched: pd.DataFrame, df1: pd.DataFrame, df2: pd.DataFrame):
+    """Remove the matched rows from df1 and df2. Matched results from merging df1 with df2.
+    Important order of df1 and df2 matters."""
+
+    # extract df1 and df2 from matched
+    matched_x = matched[[x for x in matched.columns if "_x" in x]].copy()
+    matched_y = matched[[y for y in matched.columns if "_y" in y]].copy()
+    matched_x.columns = [x.replace("_x", "") for x in matched_x.columns]
+    matched_y.columns = [y.replace("_y", "") for y in matched_y.columns]
+
+    # Add frame column and reorder
+    matched_x[FRAME] = matched[FRAME]
+    matched_y[FRAME] = matched[FRAME]
+    matched_x = matched_x[df1.columns]
+    matched_y = matched_y[df2.columns]
+
+    df1_new = pd.concat([df1, matched_x])
+    df2_new = pd.concat([df2, matched_y])
+
+    df1_new = df1_new.drop_duplicates(keep=False)
+    df2_new = df2_new.drop_duplicates(keep=False)
+
+    return df1_new, df2_new
+
+
 def filter_tracks(df: pd.DataFrame, min_length: int = 10) -> pd.DataFrame:
     """Filter tracks based on length.
 
@@ -91,37 +116,40 @@ def merge_channels(
     Return:
         data frame of merged datasers.
     """
-
-    dist = calculate_distance(df1, df2, cost)
-    dist = dist.squeeze()
-
-    rows, cols = scipy.optimize.linear_sum_assignment(dist)
-    remove = 0
-    for r, c in zip(rows, cols):
-        if dist[r, c] > distance_cutoff:
-            rows = rows[rows != r]
-            cols = cols[cols != c]
-            remove += 1
-
-    track_ids_df1 = []
-    for trackid, _ in df1.groupby(TRACKID):
-        track_ids_df1.append(trackid)
-
-    track_ids_df2 = []
-    for trackid, _ in df2.groupby(TRACKID):
-        track_ids_df2.append(trackid)
-
-    track_list_df1 = np.array([track_ids_df1[i] for i in rows])
-    track_list_df2 = np.array([track_ids_df2[i] for i in cols])
-
     results = pd.DataFrame()
+    while True:
+        dist = calculate_distance(df1, df2, cost)
+        dist = dist.squeeze()
 
-    for idx1, idx2 in zip(track_list_df1, track_list_df2):
-        sub1 = df1[df1[TRACKID] == idx1].copy()
-        sub2 = df2[df2[TRACKID] == idx2].copy()
-        tmp = pd.merge(sub1, sub2, on=FRAME, how="outer").sort_values(FRAME)
-        tmp["uniqueid"] = secrets.token_hex(16)
-        results = pd.concat([results, tmp])
+        rows, cols = scipy.optimize.linear_sum_assignment(dist)
+        remove = 0
+        for r, c in zip(rows, cols):
+            if dist[r, c] > distance_cutoff:
+                rows = rows[rows != r]
+                cols = cols[cols != c]
+                remove += 1
+
+        if len(rows) == 0:
+            break
+
+        track_ids_df1 = []
+        for trackid, _ in df1.groupby(TRACKID):
+            track_ids_df1.append(trackid)
+
+        track_ids_df2 = []
+        for trackid, _ in df2.groupby(TRACKID):
+            track_ids_df2.append(trackid)
+
+        track_list_df1 = np.array([track_ids_df1[i] for i in rows])
+        track_list_df2 = np.array([track_ids_df2[i] for i in cols])
+
+        for idx1, idx2 in zip(track_list_df1, track_list_df2):
+            sub1 = df1[df1[TRACKID] == idx1].copy()
+            sub2 = df2[df2[TRACKID] == idx2].copy()
+            tmp = pd.merge(sub1, sub2, on=FRAME, how="outer").sort_values(FRAME)
+            df1, df2 = drop_matched(tmp, df1, df2)
+            tmp["uniqueid"] = secrets.token_hex(16)
+            results = pd.concat([results, tmp])
 
     return results
 

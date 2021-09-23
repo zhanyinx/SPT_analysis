@@ -4,6 +4,11 @@ import numpy as np
 import pandas as pd
 import argparse
 import re
+import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
+
+matplotlib.use("Agg")
 
 from utils import *
 
@@ -86,6 +91,15 @@ def main():
         res = merge_channels(
             channel1, channel2, cost=args.cost, distance_cutoff=args.distance_cutoff
         )
+        with PdfPages(f"{outdir}/{outname}.pdf") as pdf:
+            for _, sub in res.groupby("uniqueid"):
+                fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+                sub = sub.dropna()
+                ax.plot(sub[f"{X}_x"], sub[f"{Y}_x"])
+                ax.plot(sub[f"{X}_y"], sub[f"{Y}_y"])
+                pdf.savefig(fig)
+                plt.close()
+
         res = calculate_pairwise_distance(res)
 
         res.to_csv(f"{outdir}/{outname}", index=False)
