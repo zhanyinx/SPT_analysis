@@ -104,7 +104,11 @@ def calculate_distance(df1: pd.DataFrame, df2: pd.DataFrame, cost: bool = True):
 
 
 def merge_channels(
-    df1: pd.DataFrame, df2: pd.DataFrame, cost: bool = True, distance_cutoff: int = 2
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+    cost: bool = True,
+    distance_cutoff: int = 2,
+    recursive: bool = True,
 ):
     """Return data frame containing the merged channel tracks
 
@@ -113,6 +117,7 @@ def merge_channels(
         df2: dataframe containing the second dataset (ground truth, channel 2 etc..)
         cost: if defined, the distance will be scaled by the fraction of no overlapping points
         distance_cutoff: cutoff on the average distance between tracks to be considered as corresponding track.
+        recursive: apply recursive matching of leftover of partially matched tracks.
     Return:
         data frame of merged datasers.
     """
@@ -150,6 +155,9 @@ def merge_channels(
             df1, df2 = drop_matched(tmp, df1, df2)
             tmp["uniqueid"] = secrets.token_hex(16)
             results = pd.concat([results, tmp])
+
+        if not recursive:
+            return results
 
     return results
 

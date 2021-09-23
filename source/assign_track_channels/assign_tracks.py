@@ -50,6 +50,13 @@ def _parse_args():
         help="If defined, it will apply cost to partially overlapping tracks. See util.calculate_single_dist for more info",
     )
     parser.add_argument(
+        "-r",
+        "--recursive",
+        dest="recursive",
+        action="store_true",
+        help="If defined, recursively matches the leftover of partially matched tracks.",
+    )
+    parser.add_argument(
         "-o",
         "--output",
         type=str,
@@ -68,9 +75,15 @@ def main():
 
     client = Client()
 
+    if not os.path.isdir(args.input):
+        raise ValueError(f"Input directory {args.input} does not exist.")
+
     channel1_files = sorted(glob.glob(f"{args.input}/*w1*csv"))
     names = [re.search(r"(^.*)w1", os.path.basename(x))[1] for x in channel1_files]
     channel2_files = [glob.glob(f"{args.input}/{name}*w2*csv")[0] for name in names]
+
+    if len(channel1_files) == 0:
+        raise ValueError(f"No files found in the input directory {args.input}.")
 
     outdir = args.output
     if args.output is None:
@@ -89,7 +102,11 @@ def main():
         channel2 = filter_tracks(channel2, min_length=args.min_length)
         channel1 = filter_tracks(channel1, min_length=args.min_length)
         res = merge_channels(
-            channel1, channel2, cost=args.cost, distance_cutoff=args.distance_cutoff
+            channel1,
+            channel2,
+            cost=args.cost,
+            distance_cutoff=args.distance_cutoff,
+            recursive=args.recursive,
         )
         with PdfPages(f"{outdir}/{outname}.pdf") as pdf:
             for _, sub in res.groupby("uniqueid"):
