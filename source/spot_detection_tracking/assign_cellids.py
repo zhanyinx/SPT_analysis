@@ -35,7 +35,6 @@ def most_frequent(List):
 
 
 file = File(xml)  # read xml
-frameList = labeledFrames.split(",")  # get annotated frame list
 
 reader = TmXmlReader(file)
 if not reader.isReadingOk():
@@ -66,7 +65,9 @@ reader.readSettings(
 spots = model.getSpots()  # get spots
 
 mask = IJ.openImage(maskfile)  # open mask file and get calibration
-cal = mask.getCalibration()
+cal = settings.imp.getCalibration()
+# frameList = list(range(mask.getNSlices()))
+frameList = labeledFrames.split(",")  # get annotated frame list
 
 # for each spot, look up cellID in closest frame
 # put feature CellID
@@ -109,12 +110,12 @@ writer.writeToFile()
 
 
 # Export in csv
-spots = [['Label', 'ID', 'TRACK_ID', 'QUALITY', 'POSITION_X', 'POSITION_Y',
-       'POSITION_Z', 'POSITION_T', 'FRAME', 'RADIUS', 'VISIBILITY',
+spots = [['Label', 'ID', 'track', 'QUALITY', 'x', 'y',
+       'z', 'POSITION_T', 'frame', 'RADIUS', 'VISIBILITY',
        'MANUAL_INTEGER_SPOT_FEATURE', 'MANUAL_DOUBLE_SPOT_FEATURE',
        'HAS_MAX_QUALITY_IN_FRAME', 'MANUAL_COLOR', 'MEAN_INTENSITY',
        'MEDIAN_INTENSITY', 'MIN_INTENSITY', 'MAX_INTENSITY', 'TOTAL_INTENSITY',
-       'STANDARD_DEVIATION', 'ESTIMATED_DIAMETER', 'CONTRAST', 'SNR','CELLID']]
+       'STANDARD_DEVIATION', 'ESTIMATED_DIAMETER', 'CONTRAST', 'SNR','cell']]
 
 
 # Export as csv
