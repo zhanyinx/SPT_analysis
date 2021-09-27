@@ -95,8 +95,8 @@ def main():
     for channel1, channel2 in zip(channel1_files, channel2_files):
         outname = os.path.basename(channel1).replace("w1", "w1.w2")
         channel1 = pd.read_csv(channel1)
-        channel1 = channel1[[X, Y, Z, FRAME, TRACKID, CELLID]]
         channel2 = pd.read_csv(channel2)
+        channel1 = channel1[[X, Y, Z, FRAME, TRACKID, CELLID]]
         channel2 = channel2[[X, Y, Z, FRAME, TRACKID, CELLID]]
 
         channel2 = filter_tracks(channel2, min_length=args.min_length)
