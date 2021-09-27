@@ -4,12 +4,12 @@ import pandas as pd
 import scipy.optimize
 import secrets
 
-TRACKID = "TRACK_ID"
-X = "POSITION_X"
-Y = "POSITION_Y"
-Z = "POSITION_Z"
-FRAME = "FRAME"
-CELLID = "CELLID"
+TRACKID = "track"
+X = "x"
+Y = "y"
+Z = "z"
+FRAME = "frame"
+CELLID = "cell"
 
 
 def drop_matched(matched: pd.DataFrame, df1: pd.DataFrame, df2: pd.DataFrame):
