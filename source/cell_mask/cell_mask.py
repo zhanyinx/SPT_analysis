@@ -28,6 +28,14 @@ def _parse_args():
         required=False,
         help="Output folder, default mask within input folder",
     )
+    parser.add_argument(
+        "-t",
+        "--target",
+        type=str,
+        default=None,
+        required=False,
+        help="Target channel tag, if provided, it will look for files with the tag.",
+    )
     args = parser.parse_args()
     return args
 
@@ -43,6 +51,8 @@ def main():
     else:
         raise ValueError(f"Expected input folder or file. Provided {args.input}.")
 
+    if args.target is not None:
+        inputs = [x for x in inputs if args.target in x]
     output = args.output
     if output is None:
         output = f"{os.path.abspath(args.input)}/mask"
