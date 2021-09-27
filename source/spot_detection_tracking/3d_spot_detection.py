@@ -161,6 +161,13 @@ def main():
 
     # Read movie
     movie = skimage.io.imread(args.input)
+    if len(movie.shape) == 3:
+        movie = np.expand_dims(movie, axis=0)
+
+    if len(movie.shape) < 3:
+        raise ValueError(
+            f"Expected at least 3 dimension, found only {len(movie.shape)}"
+        )
 
     # Detect spots
     dfs = []
