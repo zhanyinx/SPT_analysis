@@ -592,6 +592,11 @@ def __create_settings(
     # Image metadata
     path, fname = os.path.split(file_image)
     image = skimage.io.imread(file_image)
+    if len(image.shape) == 3:
+        Warning(
+            f"Found image with shape = 3; assuming it's 3d data with a single time point."
+        )
+        image = np.expand_dims(image, axis=0)
     frames, nslices, width, height = image.shape
     imagedata = {
         "filename": fname,

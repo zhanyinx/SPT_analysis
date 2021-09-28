@@ -162,6 +162,9 @@ def main():
     # Read movie
     movie = skimage.io.imread(args.input)
     if len(movie.shape) == 3:
+        Warning(
+            f"Found image with shape = 3; assuming it's 3d data with a single time point."
+        )
         movie = np.expand_dims(movie, axis=0)
 
     if len(movie.shape) < 3:
