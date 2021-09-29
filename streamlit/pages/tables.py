@@ -1,6 +1,6 @@
 import streamlit as st
 import os
-from .dictionary import LIST_SAMPLES
+from .dictionary import LIST_SAMPLES_MSD
 from .utils import *
 
 
@@ -134,7 +134,7 @@ def tables():
     st.title("Systematic error table and rouse time estimation")
 
     # Samples
-    list_samples = LIST_SAMPLES
+    list_samples = LIST_SAMPLES_MSD
     systematic_error_table(list_samples)
 
     original_data = load_data(f"rousetime.csv.zip")

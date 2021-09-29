@@ -1,4 +1,4 @@
-LIST_SAMPLES = {
+LIST_SAMPLES_MSD = {
     "rad21": "https://drive.google.com/uc?export=download&id=1UHfqftidv1MKOtnzhyXHNKVFQZPKIj2Z",
     "rad21_translation": "https://drive.google.com/uc?export=download&id=1iaRZpaJTzX9OZplMDgMr8uvQuHaw9I9y",
     "rad21_rototranslation": "https://drive.google.com/uc?export=download&id=1bN1fOQCtJrm991LvLHLKXCluKF_BOr8X",
