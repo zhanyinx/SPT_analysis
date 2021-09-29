@@ -65,7 +65,7 @@ def sample_specific_systematic_error(data: pd.DataFrame):
                 .values[0],
                 4,
             )
-        data[data["cell_line"] == celline]["tamsd"] = (
+        data[data["cell_line"] == celline, "tamsd"] = (
             data[data["cell_line"] == celline]["tamsd"] - systematic_error
         )
     data = data[~(data["induction_time"] == "fixed")]
