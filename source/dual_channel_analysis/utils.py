@@ -51,7 +51,6 @@ def filter_tracks(df: pd.DataFrame, min_length: int = 10) -> pd.DataFrame:
     Arg:
        df: dataframe containing the tracked data
        min_length: integer specifying the min track length
-       len_tag: column name of track id
 
     Return:
        filtered data frame."""
@@ -280,10 +279,11 @@ def compute_affine_transformation3d(
     Return A, t so that reference ~= np.transpose(np.dot(A, moving.T)) + t
 
     Args:
-        directory: directory containing spots from bead images.
+        reference_files: list of files containing the tracks from reference (fixed).
+        moving_files: list of files containing the tracks from channel to be moved (moving).
         channel_to_correct: channel of moving channel, default channel 2.
         distance_cutoff: max distance for matching spots between reference and moving.
-        quality: if provided, save quality of chromatic aberration correction on bead images.
+        quality: Filename, if provided, save quality of chromatic aberration correction on bead images.
 
     Return:
         A (3x3): Affine transformation matrix.
@@ -338,7 +338,7 @@ def chromatic_aberration_correction(
         coords: np.ndarray with coordinates (shape n,3).
         channel_to_correct: channel to correct, default channel 2.
         distance_cutoff: max distance for matching spots between reference and moving.
-        quality: if provided, save quality of chromatic aberration correction on bead images.
+        quality: Filename. If provided, save quality of chromatic aberration correction on bead images.
 
     Return:
         Corrected coordinates.
