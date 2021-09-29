@@ -174,33 +174,6 @@ def merge_channels(
     return results
 
 
-def calculate_pairwise_distance(df: pd.DataFrame):
-    """Return pairwise distance trajectories.
-
-    Args:
-        df: DataFrame containing the matched tracks across two channels.
-
-    Return:
-        DataFrame of pairwise distance trajectories."""
-    # df = df.dropna()
-    channel1 = df[[x + "_x" for x in [X, Y, Z]]].values
-    channel2 = df[[x + "_y" for x in [X, Y, Z]]].values
-
-    res = pd.DataFrame(channel1 - channel2)
-    res.columns = ["x", "y", "z"]
-    res["frame"] = df[FRAME].values
-    res["cell"] = [
-        f"w1.{w1}_w2.{w2}"
-        for w1, w2 in zip(df[CELLID + "_x"].values, df[CELLID + "_y"].values)
-    ]
-    res["track"] = [
-        f"w1.{w1}_w2.{w2}"
-        for w1, w2 in zip(df[TRACKID + "_x"].values, df[TRACKID + "_y"].values)
-    ]
-
-    return res
-
-
 def register_points_using_euclidean_distance(
     df1: pd.DataFrame, df2: pd.DataFrame, distance_cutoff: float = 0.1
 ):
@@ -225,7 +198,8 @@ def register_points_using_euclidean_distance(
 
 
 def chrom_aberration_quality(original1, original2, original2_corrected, outfile):
-    """Plot graphs to check quality of chromatic aberration correction."""
+    """Plot graphs to check quality of chromatic aberration correction and
+    returns sigma x, y and z."""
 
     axis = ["x", "y", "z"]
 
@@ -248,13 +222,15 @@ def chrom_aberration_quality(original1, original2, original2_corrected, outfile)
             pdf.savefig(fig)
             plt.close()
 
+        sigma = []
         for i in range(len(axis)):
             fig, ax = plt.subplots(1, 2, figsize=(10, 5))
             diff1 = original1[..., i] - original2_corrected[..., i]
             diff2 = original1[..., i] - original2[..., i]
 
-            std1 = round(np.std(diff1), 3)
-            std2 = round(np.std(diff2), 3)
+            std1 = round(np.std(diff1), 5)
+            sigma.append(std1)
+            std2 = round(np.std(diff2), 5)
             minimum = np.min(np.concatenate([diff1, diff2]))
             maximum = np.max(np.concatenate([diff1, diff2]))
             ax[0].hist(diff1)
@@ -266,28 +242,34 @@ def chrom_aberration_quality(original1, original2, original2_corrected, outfile)
             pdf.savefig(fig)
             plt.close()
 
+    return sigma
+
 
 def compute_affine_transformation3d(
     reference_files: list,
     moving_files: list,
+    quality: str,
     channel_to_correct: int = 2,
     distance_cutoff: float = 0.1,
-    quality: str = None,
 ):
     """Find affine transformation to go from spots within moving files to reference files.
 
-    Return A, t so that reference ~= np.transpose(np.dot(A, moving.T)) + t
+    Return A, t so that reference ~= np.transpose(np.dot(A, moving.T)) + t.
+    In addition returns the error on x,y,z from bead images.
 
     Args:
         reference_files: list of files containing the tracks from reference (fixed).
         moving_files: list of files containing the tracks from channel to be moved (moving).
+        quality: Filename where to save quality of chromatic aberration correction on bead images.
         channel_to_correct: channel of moving channel, default channel 2.
         distance_cutoff: max distance for matching spots between reference and moving.
-        quality: Filename, if provided, save quality of chromatic aberration correction on bead images.
 
     Return:
         A (3x3): Affine transformation matrix.
-        t (1x3): Affine translation vector."""
+        t (1x3): Affine translation vector.
+        sx: error in x.
+        sy: error in y.
+        sz: error in z."""
 
     references = []
     movings = []
@@ -311,37 +293,35 @@ def compute_affine_transformation3d(
 
     t, A = compute_affine_transform(references, movings)
 
-    # if defined quality, plot quality of beads transformation
-    if quality:
-        newcoords = np.transpose(np.dot(A, movings.T)) + t
-        chrom_aberration_quality(
-            original1=references,
-            original2=movings,
-            original2_corrected=newcoords,
-            outfile=quality,
-        )
+    newcoords = np.transpose(np.dot(A, movings.T)) + t
+    sx, sy, sz = chrom_aberration_quality(
+        original1=references,
+        original2=movings,
+        original2_corrected=newcoords,
+        outfile=quality,
+    )
 
-    return A, t
+    return A, t, sx, sy, sz
 
 
 def chromatic_aberration_correction(
     directory: str,
     coords: np.ndarray,
+    quality: str,
     channel_to_correct: int = 2,
     distance_cutoff: float = 0.1,
-    quality: str = None,
 ) -> np.ndarray:
     """Perform chromatic aberration correction and return corrected DataFrame.
 
     Args:
         directory: directory containing spots from bead images.
         coords: np.ndarray with coordinates (shape n,3).
+        quality: Filename where to save quality of chromatic aberration correction on bead images.
         channel_to_correct: channel to correct, default channel 2.
         distance_cutoff: max distance for matching spots between reference and moving.
-        quality: Filename. If provided, save quality of chromatic aberration correction on bead images.
 
     Return:
-        Corrected coordinates.
+        Corrected coordinates and errors on x,y,z calculated from bead images.
     """
 
     if not os.path.isdir(directory):
@@ -361,7 +341,7 @@ def chromatic_aberration_correction(
             f"Choose either channel 1 or channel 2 to be corrected! Provided channel {channel_to_correct}"
         )
 
-    A, t = compute_affine_transformation3d(
+    A, t, sx, sy, sz = compute_affine_transformation3d(
         reference_files=reference_files,
         moving_files=moving_files,
         channel_to_correct=channel_to_correct,
@@ -371,4 +351,33 @@ def chromatic_aberration_correction(
 
     newcoords = np.transpose(np.dot(A, coords.T)) + t
 
-    return newcoords
+    return newcoords, sx, sy, sz
+
+
+def calculate_pairwise_distance(df: pd.DataFrame):
+    """Return pairwise distance trajectories.
+
+    Args:
+        df: DataFrame containing the matched tracks across two channels.
+
+    Return:
+        DataFrame of pairwise distance trajectories."""
+    # df = df.dropna()
+    channel1 = df[[x + "_x" for x in [X, Y, Z]]].values
+    channel2 = df[[x + "_y" for x in [X, Y, Z]]].values
+
+    res = pd.DataFrame(channel1 - channel2)
+    res.columns = ["x", "y", "z"]
+    res["frame"] = df[FRAME].values
+    res["cell"] = [
+        f"w1.{w1}_w2.{w2}"
+        for w1, w2 in zip(df[CELLID + "_x"].values, df[CELLID + "_y"].values)
+    ]
+    res["track"] = [
+        f"w1.{w1}_w2.{w2}"
+        for w1, w2 in zip(df[TRACKID + "_x"].values, df[TRACKID + "_y"].values)
+    ]
+
+    res["uniqueid"] = df["uniqueid"].values
+
+    return res

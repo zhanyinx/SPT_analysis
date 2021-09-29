@@ -116,7 +116,7 @@ def main():
         # correct for chromatic aberration
         if args.beads:
             coords = channel2[[X, Y, Z]].values
-            coords_corrected = chromatic_aberration_correction(
+            coords_corrected, sx, sy, sz = chromatic_aberration_correction(
                 directory=args.beads,
                 coords=coords,
                 channel_to_correct=2,
@@ -156,7 +156,10 @@ def main():
 
         # calculate pair-wise distance
         res = calculate_pairwise_distance(res)
-
+        if args.beads:
+            res["sigma_x"] = sx
+            res["sigma_y"] = sy
+            res["sigma_z"] = sz
         res["chromatic_correction"] = bool(args.beads)
 
         res.to_csv(f"{outdir}/{outname}", index=False)
