@@ -1,9 +1,17 @@
 import dask
+import glob
+import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
+import os
 import pandas as pd
+from pymicro.view.vol_utils import compute_affine_transform
+import scipy
 import scipy.optimize
 import secrets
 
+matplotlib.use("Agg")
 TRACKID = "track"
 X = "x"
 Y = "y"
@@ -43,10 +51,12 @@ def filter_tracks(df: pd.DataFrame, min_length: int = 10) -> pd.DataFrame:
     Arg:
        df: dataframe containing the tracked data
        min_length: integer specifying the min track length
+       len_tag: column name of track id
 
     Return:
        filtered data frame."""
 
+    df = df[[X, Y, Z, FRAME, TRACKID, CELLID]]
     distribution_length = df[TRACKID].value_counts()
     selection = distribution_length.index.values[
         distribution_length.values > min_length
@@ -123,9 +133,11 @@ def merge_channels(
     """
     results = pd.DataFrame()
     while True:
+        # calculate distance between tracks
         dist = calculate_distance(df1, df2, cost)
         dist = dist.squeeze()
 
+        # match tracks
         rows, cols = scipy.optimize.linear_sum_assignment(dist)
         remove = 0
         for r, c in zip(rows, cols):
@@ -137,10 +149,10 @@ def merge_channels(
         if len(rows) == 0:
             break
 
+        # extract matched track ids
         track_ids_df1 = []
         for trackid, _ in df1.groupby(TRACKID):
             track_ids_df1.append(trackid)
-
         track_ids_df2 = []
         for trackid, _ in df2.groupby(TRACKID):
             track_ids_df2.append(trackid)
@@ -148,10 +160,11 @@ def merge_channels(
         track_list_df1 = np.array([track_ids_df1[i] for i in rows])
         track_list_df2 = np.array([track_ids_df2[i] for i in cols])
 
+        # record and drop matched part of tracks
         for idx1, idx2 in zip(track_list_df1, track_list_df2):
             sub1 = df1[df1[TRACKID] == idx1].copy()
             sub2 = df2[df2[TRACKID] == idx2].copy()
-            tmp = pd.merge(sub1, sub2, on=FRAME, how="outer").sort_values(FRAME)
+            tmp = pd.merge(sub1, sub2, on=FRAME, how="inner").sort_values(FRAME)
             df1, df2 = drop_matched(tmp, df1, df2)
             tmp["uniqueid"] = secrets.token_hex(16)
             results = pd.concat([results, tmp])
@@ -170,7 +183,7 @@ def calculate_pairwise_distance(df: pd.DataFrame):
 
     Return:
         DataFrame of pairwise distance trajectories."""
-    df = df.dropna()
+    # df = df.dropna()
     channel1 = df[[x + "_x" for x in [X, Y, Z]]].values
     channel2 = df[[x + "_y" for x in [X, Y, Z]]].values
 
@@ -187,3 +200,175 @@ def calculate_pairwise_distance(df: pd.DataFrame):
     ]
 
     return res
+
+
+def register_points_using_euclidean_distance(
+    df1: pd.DataFrame, df2: pd.DataFrame, distance_cutoff: float = 0.1
+):
+    """Given two DataFrame, get the two sets of matched points"""
+    reference = pd.read_csv(df1)
+    moving = pd.read_csv(df2)
+
+    reference = reference[[X, Y, Z]].values
+    moving = moving[[X, Y, Z]].values
+
+    cdist = scipy.spatial.distance.cdist(reference, moving, metric="euclidean")
+    rows, cols = scipy.optimize.linear_sum_assignment(cdist)
+    for r, c in zip(rows, cols):
+        if cdist[r, c] > distance_cutoff:
+            rows = rows[rows != r]
+            cols = cols[cols != c]
+
+    reference = np.array([reference[i] for i in rows])
+    moving = np.array([moving[i] for i in cols])
+
+    return reference, moving
+
+
+def chrom_aberration_quality(original1, original2, original2_corrected, outfile):
+    """Plot graphs to check quality of chromatic aberration correction."""
+
+    axis = ["x", "y", "z"]
+
+    range1 = [0, 0, 1]
+    range2 = [1, 2, 2]
+    with PdfPages(outfile) as pdf:
+        for i, j in zip(range1, range2):
+            fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+            ax[0].scatter(original1[..., i], original1[..., j])
+            ax[0].scatter(
+                original2_corrected[..., i],
+                original2_corrected[..., j],
+                color="r",
+                marker="+",
+            )
+            ax[0].set_title(f"After correction {axis[i]}{axis[j]}")
+            ax[1].scatter(original1[..., i], original1[..., j])
+            ax[1].scatter(original2[..., i], original2[..., j], color="r", marker="+")
+            ax[1].set_title(f"Before correction {axis[i]}{axis[j]}")
+            pdf.savefig(fig)
+            plt.close()
+
+        for i in range(len(axis)):
+            fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+            diff1 = original1[..., i] - original2_corrected[..., i]
+            diff2 = original1[..., i] - original2[..., i]
+
+            std1 = round(np.std(diff1), 3)
+            std2 = round(np.std(diff2), 3)
+            minimum = np.min(np.concatenate([diff1, diff2]))
+            maximum = np.max(np.concatenate([diff1, diff2]))
+            ax[0].hist(diff1)
+            ax[0].set_title(f"After correction {axis[i]}, sigma {std1}")
+            ax[0].set_xlim(minimum, maximum)
+            ax[1].hist(diff2)
+            ax[1].set_title(f"Before correction {axis[i]}, sigma {std2}")
+            ax[1].set_xlim(minimum, maximum)
+            pdf.savefig(fig)
+            plt.close()
+
+
+def compute_affine_transformation3d(
+    reference_files: list,
+    moving_files: list,
+    channel_to_correct: int = 2,
+    distance_cutoff: float = 0.1,
+    quality: str = None,
+):
+    """Find affine transformation to go from spots within moving files to reference files.
+
+    Return A, t so that reference ~= np.transpose(np.dot(A, moving.T)) + t
+
+    Args:
+        directory: directory containing spots from bead images.
+        channel_to_correct: channel of moving channel, default channel 2.
+        distance_cutoff: max distance for matching spots between reference and moving.
+        quality: if provided, save quality of chromatic aberration correction on bead images.
+
+    Return:
+        A (3x3): Affine transformation matrix.
+        t (1x3): Affine translation vector."""
+
+    references = []
+    movings = []
+
+    # pool registred points from all bead images
+    for reference, moving in zip(reference_files, moving_files):
+        reference, moving = register_points_using_euclidean_distance(
+            df1=reference, df2=moving, distance_cutoff=distance_cutoff
+        )
+
+        references.append(reference)
+        movings.append(moving)
+
+    references = np.concatenate(references)
+    movings = np.concatenate(movings)
+
+    if len(references) < 4:
+        raise ValueError(
+            f"Computing affine trasformation requires at least 4 points, provided {len(references)}"
+        )
+
+    t, A = compute_affine_transform(references, movings)
+
+    # if defined quality, plot quality of beads transformation
+    if quality:
+        newcoords = np.transpose(np.dot(A, movings.T)) + t
+        chrom_aberration_quality(
+            original1=references,
+            original2=movings,
+            original2_corrected=newcoords,
+            outfile=quality,
+        )
+
+    return A, t
+
+
+def chromatic_aberration_correction(
+    directory: str,
+    coords: np.ndarray,
+    channel_to_correct: int = 2,
+    distance_cutoff: float = 0.1,
+    quality: str = None,
+) -> np.ndarray:
+    """Perform chromatic aberration correction and return corrected DataFrame.
+
+    Args:
+        directory: directory containing spots from bead images.
+        coords: np.ndarray with coordinates (shape n,3).
+        channel_to_correct: channel to correct, default channel 2.
+        distance_cutoff: max distance for matching spots between reference and moving.
+        quality: if provided, save quality of chromatic aberration correction on bead images.
+
+    Return:
+        Corrected coordinates.
+    """
+
+    if not os.path.isdir(directory):
+        raise ValueError(f"Beads directory does not exist!")
+
+    reference_files = sorted(glob.glob(f"{directory}/*w1*csv"))
+    moving_files = sorted(glob.glob(f"{directory}/*w2*csv"))
+
+    assert len(reference_files) == len(moving_files)
+    assert len(reference_files) != 0
+
+    if channel_to_correct == 1:
+        moving_files, reference_files = reference_files, moving_files
+
+    if channel_to_correct != 1 and channel_to_correct != 2:
+        raise ValueError(
+            f"Choose either channel 1 or channel 2 to be corrected! Provided channel {channel_to_correct}"
+        )
+
+    A, t = compute_affine_transformation3d(
+        reference_files=reference_files,
+        moving_files=moving_files,
+        channel_to_correct=channel_to_correct,
+        distance_cutoff=distance_cutoff,
+        quality=quality,
+    )
+
+    newcoords = np.transpose(np.dot(A, coords.T)) + t
+
+    return newcoords
