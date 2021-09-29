@@ -28,6 +28,14 @@ def _parse_args():
         help="Maximum distance between trajectories to be considered as matching.",
     )
     parser.add_argument(
+        "-dp",
+        "--distance_cutoff_points",
+        type=float,
+        default=0.1,
+        required=False,
+        help="Maximum distance between points to be considered as corresponding.",
+    )
+    parser.add_argument(
         "-ml",
         "--min_length",
         type=int,
@@ -112,7 +120,7 @@ def main():
                 directory=args.beads,
                 coords=coords,
                 channel_to_correct=2,
-                distance_cutoff=0.1,
+                distance_cutoff=args.distance_cutoff_points,
                 quality=f"{outdir}/chromatic_aberration_correction_quality.pdf",
             )
             channel2[[X, Y, Z]] = coords_corrected
