@@ -71,7 +71,7 @@ def pairwise_analysis():
         "Choose an example trajectory index",
         min_value=0,
         max_value=len(options) - 1,
-        value=500,
+        value=1,
         step=1,
     )
     col1, col2 = st.columns(2)

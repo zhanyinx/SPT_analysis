@@ -9,11 +9,11 @@ def about():
         """
 		### What you can find:
 		
-		- Display systematic error and rouse time tables
+        - Display systematic error and rouse time tables
 
-		- Mean square displacement analysis 
+        - Mean square displacement analysis 
 
-		- Distribution of displacement angles
+        - Distribution of displacement angles
 
         - Analysis of two color imaging (pairwise distance)
 

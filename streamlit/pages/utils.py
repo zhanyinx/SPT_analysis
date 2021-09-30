@@ -20,13 +20,17 @@ def load_data(data: str, interval: float = None):
 # Fit alpha and diffusion coefficient given 3 regimes
 def fit_alpha_d(subset: pd.DataFrame, end1: float, end2: float):
     """Fit the alpha and D under the 3 different regimes separated by end1 and end2 values."""
+    subset["loglags"] = np.log10(subset["lags"].values)
+    subset["logtamsd"] = np.log10(subset["tamsd"].values)
+
+    subset = subset.dropna()
     r1 = subset[subset["lags"] < end1].copy()
     r2 = subset[(subset["lags"] >= end1) & (subset["lags"] <= end2)].copy()
     r3 = subset[subset["lags"] > end2].copy()
 
-    a1, d1 = np.polyfit(np.log10(r1["lags"]), np.log10(r1["tamsd"]), 1)
-    a2, d2 = np.polyfit(np.log10(r2["lags"]), np.log10(r2["tamsd"]), 1)
-    a3, d3 = np.polyfit(np.log10(r3["lags"]), np.log10(r3["tamsd"]), 1)
+    a1, d1 = np.polyfit((r1["loglags"]), (r1["logtamsd"]), 1)
+    a2, d2 = np.polyfit((r2["loglags"]), (r2["logtamsd"]), 1)
+    a3, d3 = np.polyfit((r3["loglags"]), (r3["logtamsd"]), 1)
 
     minimum = np.min(r1["lags"])
     maximum = np.max(r3["lags"])
