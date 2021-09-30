@@ -15,6 +15,8 @@ def about():
 
 		- Distribution of displacement angles
 
+        - Analysis of two color imaging (pairwise distance)
+
         ### Abbreviation
         
         - EATAmsd: ensamble averaged time averaged mean square displacement

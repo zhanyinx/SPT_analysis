@@ -100,3 +100,61 @@ def download_csv(
     b64 = base64.b64encode(csv).decode()
     href = f'<a href="data:file/csv;base64,{b64}" download="{download_filename}" target="_blank">{download_link_text}</a>'
     return href
+
+
+def rle(inarray):
+    """Run length encoding. Partial credit to R rle function.
+    Multi datatype arrays catered for including non Numpy
+    Returns: tuple (runlengths, startpositions, values)"""
+    ia = np.asarray(inarray)  # convert to numpy array
+    n = len(ia)
+    if n == 0:
+        return (None, None, None)
+    else:
+        y = ia[1:] != ia[:-1]  # pairwise unequal (string safe)
+        i = np.append(np.where(y), n - 1)  # must include last element posi
+        z = np.diff(np.append(-1, i))  # run lengths
+        p = np.cumsum(np.append(0, z))[:-1]  # positions
+        return (z, p, ia[i])
+
+
+@st.cache
+def contact_duration_second_passage_time(
+    df: pd.DataFrame,
+    resolution: float,
+    contact_cutoff: float = 0.1,
+    trackid: str = "uniqueid",
+    distance: str = "distance",
+    split: str = "condition",
+):
+    """Return DataFrame of contact duration and second passage time across all matched tracks within the provided DataFrame.
+
+    Args:
+        df: dataframe containing the distance between two channels across all matched tracks.
+        contact_cutoff: distance to define a contact.
+        trackid: column name of the trackid in df.
+        distance: column name of distance in df.
+        split: column name to split the df into different conditions.
+    """
+    duration_df = pd.DataFrame()
+    second_passage_time_df = pd.DataFrame()
+    for condition, subgroup in df.groupby(split):
+        duration = []
+        second_passage_time = []
+        for _, sub in subgroup.groupby(trackid):
+            length, position, types = rle(sub[distance] < contact_cutoff)
+            duration.append(length[np.where(types == True)])
+            second_passage_time.append(length[np.where(types == False)][1:][:-1])
+        tmp = pd.DataFrame(np.concatenate(duration), columns=["contact_duration"])
+        tmp[split] = condition
+        duration_df = pd.concat([duration_df, tmp])
+
+        tmp = pd.DataFrame(
+            np.concatenate(second_passage_time), columns=["second_passage_time"]
+        )
+        tmp[split] = condition
+        second_passage_time_df = pd.concat([second_passage_time_df, tmp])
+
+    duration_df["contact_duration"] *= resolution
+    second_passage_time_df["second_passage_time"] *= resolution
+    return duration_df, second_passage_time_df
