@@ -156,12 +156,27 @@ def main():
 
         # calculate pair-wise distance
         res = calculate_pairwise_distance(res)
+        res["distance"] = np.sqrt(np.sum(np.square(res[[X, Y, Z]].values), axis=1))
+
+        # calculate errors if bead images provided
         if args.beads:
             res["sigma_x"] = sx
             res["sigma_y"] = sy
             res["sigma_z"] = sz
-        res["chromatic_correction"] = bool(args.beads)
+            res["sigma_d"] = (
+                np.sqrt(
+                    (res[X].values * sx) ** 2
+                    + (res[Y].values * sy) ** 2
+                    + (res[Z].values * sz) ** 2
+                )
+                / res["distance"]
+            )
 
+        # log whether chromatic aberration has been performed
+        res["chromatic_correction"] = bool(args.beads)
+        res["filename"] = outname
+
+        # save to file
         res.to_csv(f"{outdir}/{outname}", index=False)
 
     client.close()
