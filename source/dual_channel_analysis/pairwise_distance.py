@@ -143,14 +143,14 @@ def main():
 
         # plot matched tracks
         with PdfPages(f"{outdir}/{outname}.pdf") as pdf:
-            for _, sub in res.groupby("uniqueid"):
+            for idx, sub in res.groupby("uniqueid"):
                 fig, ax = plt.subplots(1, 1, figsize=(10, 10))
                 sub = sub.dropna()
                 legends = ["c1", "c2"]
                 ax.plot(sub[f"{X}_x"], sub[f"{Y}_x"], "-o")
                 ax.plot(sub[f"{X}_y"], sub[f"{Y}_y"], "-o")
                 plt.legend(legends)
-                plt.title(f"Length tracks {len(sub)}")
+                plt.title(f"Length tracks {len(sub)}; id {idx}")
                 pdf.savefig(fig)
                 plt.close()
 
