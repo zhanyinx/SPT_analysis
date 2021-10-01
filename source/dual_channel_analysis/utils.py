@@ -33,6 +33,9 @@ def drop_matched(matched: pd.DataFrame, df1: pd.DataFrame, df2: pd.DataFrame):
     # Add frame column and reorder
     matched_x[FRAME] = matched[FRAME]
     matched_y[FRAME] = matched[FRAME]
+    matched_x[CELLID] = matched[CELLID]
+    matched_y[CELLID] = matched[CELLID]
+
     matched_x = matched_x[df1.columns]
     matched_y = matched_y[df2.columns]
 
@@ -163,7 +166,9 @@ def merge_channels(
         for idx1, idx2 in zip(track_list_df1, track_list_df2):
             sub1 = df1[df1[TRACKID] == idx1].copy()
             sub2 = df2[df2[TRACKID] == idx2].copy()
-            tmp = pd.merge(sub1, sub2, on=FRAME, how="inner").sort_values(FRAME)
+            tmp = pd.merge(sub1, sub2, on=[FRAME, CELLID], how="inner").sort_values(
+                FRAME
+            )
             df1, df2 = drop_matched(tmp, df1, df2)
             tmp["uniqueid"] = secrets.token_hex(16)
             results = pd.concat([results, tmp])
@@ -369,10 +374,11 @@ def calculate_pairwise_distance(df: pd.DataFrame):
     res = pd.DataFrame(channel1 - channel2)
     res.columns = ["x", "y", "z"]
     res["frame"] = df[FRAME].values
-    res["cell"] = [
-        f"w1.{w1}_w2.{w2}"
-        for w1, w2 in zip(df[CELLID + "_x"].values, df[CELLID + "_y"].values)
-    ]
+    # res["cell"] = [
+    #     f"w1.{w1}_w2.{w2}"
+    #     for w1, w2 in zip(df[CELLID + "_x"].values, df[CELLID + "_y"].values)
+    # ]
+    res["cell"] = df[CELLID].values
     res["track"] = [
         f"w1.{w1}_w2.{w2}"
         for w1, w2 in zip(df[TRACKID + "_x"].values, df[TRACKID + "_y"].values)
