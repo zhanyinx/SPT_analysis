@@ -107,6 +107,7 @@ def pairwise_analysis():
     plt.errorbar(x=sub["frame"], y=sub["distance"], yerr=sub["sigma_d"])
     plt.xlabel("Time (seconds)")
     plt.ylabel("Radial distance (um)")
+    plt.title(sub.condition.values[0])
     col1.pyplot(fig)
     plt.show()
     plt.savefig("plot.pdf")
@@ -133,7 +134,7 @@ def pairwise_analysis():
         unsafe_allow_html=True,
     )
 
-    st.subheader("Contact duration and first passage time")
+    st.subheader("Contact duration and first passage time histograms")
     col1, col2 = st.columns(2)
     fig = plt.figure()
     legend = []
@@ -167,6 +168,39 @@ def pairwise_analysis():
     plt.legend(legend)
     plt.xlabel("Second passage time")
     plt.ylabel("Density")
+    col2.pyplot(fig)
+    plt.show()
+    plt.savefig("plot.pdf")
+    st.markdown(
+        download_plot(
+            "plot.pdf",
+            "Download right plot",
+        ),
+        unsafe_allow_html=True,
+    )
+
+    st.subheader("Contact duration and first passage time ecdf")
+    col1, col2 = st.columns(2)
+
+    fig = plt.figure()
+    ax = sns.ecdfplot(duration, x="contact_duration", hue="condition")
+    plt.xlabel("contact duration (seconds)")
+    plt.ylabel("ECDF")
+    col1.pyplot(fig)
+    plt.show()
+    plt.savefig("plot.pdf")
+    st.markdown(
+        download_plot(
+            "plot.pdf",
+            "Download left plot",
+        ),
+        unsafe_allow_html=True,
+    )
+
+    fig = plt.figure()
+    ax = sns.ecdfplot(second_passage_time, x="second_passage_time", hue="condition")
+    plt.xlabel("second passage time (seconds)")
+    plt.ylabel("ECDF")
     col2.pyplot(fig)
     plt.show()
     plt.savefig("plot.pdf")
