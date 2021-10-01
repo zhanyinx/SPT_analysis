@@ -161,4 +161,6 @@ def contact_duration_second_passage_time(
 
     duration_df["contact_duration"] *= resolution
     second_passage_time_df["second_passage_time"] *= resolution
+    duration_df = duration_df.reset_index()
+    second_passage_time_df = second_passage_time_df.reset_index()
     return duration_df, second_passage_time_df
