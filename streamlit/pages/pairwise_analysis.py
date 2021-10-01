@@ -67,12 +67,16 @@ def pairwise_analysis():
     # Plotting
     st.subheader("Distribution of radial distances across all selected movies")
     fig = plt.figure()
-    plt.hist((data["distance"]), density=True)
+    legend = []
+    for name, sub in data.groupby("condition"):
+        plt.hist((sub["distance"]), density=True, alpha=0.5)
+        legend.append(name)
     if st.checkbox("Manually set y axis"):
         ymax = float(st.text_input("y-axis max", "0.25"))
         plt.ylim(0, ymax)
     if st.checkbox("Check to have y axis in log"):
         plt.yscale("log")
+    plt.legend(legend)
     plt.xlabel("Distances (um)")
     plt.ylabel("Density")
     st.pyplot(fig)
