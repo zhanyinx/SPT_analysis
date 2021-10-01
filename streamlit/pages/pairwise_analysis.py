@@ -65,6 +65,29 @@ def pairwise_analysis():
     )
 
     # Plotting
+    st.subheader("Distribution of radial distances across all selected movies")
+    fig = plt.figure()
+    plt.hist((data["distance"]), density=True)
+    if st.checkbox("Manually set y axis"):
+        ymax = float(st.text_input("y-axis max", "0.25"))
+        plt.ylim(0, ymax)
+    if st.checkbox("Check to have y axis in log"):
+        plt.yscale("log")
+    plt.xlabel("Distances (um)")
+    plt.ylabel("Density")
+    st.pyplot(fig)
+    plt.show()
+    plt.savefig("plot.pdf")
+
+    # Dowload options
+    st.markdown(
+        download_plot(
+            "plot.pdf",
+            "Download plot",
+        ),
+        unsafe_allow_html=True,
+    )
+
     st.subheader("Radial distance and ecdf plots")
     options = data.uniqueid.unique()
     select = st.slider(
