@@ -68,8 +68,15 @@ def pairwise_analysis():
     st.subheader("Distribution of radial distances across all selected movies")
     fig = plt.figure()
     legend = []
+    custombins = st.checkbox("Choose your own bins (format: bin1,bin2,bin3...)")
+    if custombins:
+        bins = st.text_input("Your own list of bins:", "0.5,1,1.5,2,2.5,3,3.5")
+        bins = np.array(bins.split(",")).astype(float)
     for name, sub in data.groupby("condition"):
-        plt.hist((sub["distance"]), density=True, alpha=0.5)
+        if custombins:
+            plt.hist((sub["distance"]), density=True, alpha=0.5, bins=bins)
+        else:
+            plt.hist((sub["distance"]), density=True, alpha=0.5)
         legend.append(name)
     if st.checkbox("Manually set y axis"):
         ymax = float(st.text_input("y-axis max", "0.25"))
