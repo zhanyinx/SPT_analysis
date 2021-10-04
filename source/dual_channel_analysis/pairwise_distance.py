@@ -28,14 +28,6 @@ def _parse_args():
         help="Maximum distance between trajectories to be considered as matching.",
     )
     parser.add_argument(
-        "-dp",
-        "--distance_cutoff_points",
-        type=float,
-        default=0.1,
-        required=False,
-        help="Maximum distance between points to be considered as corresponding.",
-    )
-    parser.add_argument(
         "-ml",
         "--min_length",
         type=int,
@@ -73,6 +65,38 @@ def _parse_args():
         required=False,
         help="Folder containing beads spots, if provided, it automatically performs chromatic aberration correction.",
     )
+    parser.add_argument(
+        "-dp",
+        "--distance_cutoff_points",
+        type=float,
+        default=0.1,
+        required=False,
+        help="Maximum distance between points to be considered as corresponding in matching beads.",
+    )
+    parser.add_argument(
+        "-s",
+        "--stitch",
+        dest="stitch",
+        action="store_true",
+        help="If defined, it will try to stich tracks from the same cells",
+    )
+    parser.add_argument(
+        "-ds",
+        "--distance_cutoff_stitching",
+        type=float,
+        default=2.5,
+        required=False,
+        help="Maximum distance between allowed to joining tracks from same cells. Distance defined between closest frames.",
+    )
+    parser.add_argument(
+        "-mo",
+        "--max_overlaps",
+        type=float,
+        default=0.1,
+        required=False,
+        help="Maximum fraction overlapping allowed for overlapping tracks.",
+    )
+
     args = parser.parse_args()
     return args
 
@@ -112,6 +136,18 @@ def main():
         channel2 = pd.read_csv(channel2)
         channel1 = filter_tracks(channel1, min_length=args.min_length)
         channel2 = filter_tracks(channel2, min_length=args.min_length)
+
+        if args.stitch:
+            channel1 = stitch(
+                df=channel1,
+                max_dist=args.distance_cutoff_stitching,
+                max_overlaps=args.max_overlaps,
+            )
+            channel2 = stitch(
+                df=channel2,
+                max_dist=args.distance_cutoff_stitching,
+                max_overlaps=args.max_overlaps,
+            )
 
         # correct for chromatic aberration
         if args.beads:

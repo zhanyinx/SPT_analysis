@@ -59,6 +59,7 @@ def filter_tracks(df: pd.DataFrame, min_length: int = 10) -> pd.DataFrame:
        filtered data frame."""
 
     df = df[[X, Y, Z, FRAME, TRACKID, CELLID]]
+    df = df[df[CELLID] != 0].copy()
     distribution_length = df[TRACKID].value_counts()
     selection = distribution_length.index.values[
         distribution_length.values > min_length
@@ -66,6 +67,105 @@ def filter_tracks(df: pd.DataFrame, min_length: int = 10) -> pd.DataFrame:
 
     df = df[df[TRACKID].isin(selection)]
     return df
+
+
+def filter_overlapping(df: pd.DataFrame, max_overlaps: float = 0.25):
+    """Return data.frame where tracks with overlaps higher than max_overlaps.
+
+    Args:
+        df: dataframe with tracks to stitch
+        max_overlaps: maximum fraction of track that can overlap.
+                      Tracks with higher overlaps will be filtered out.
+
+    Return:
+        filtered dataframe.
+    """
+
+    while True:
+        # count number of duplicated timepoints per track
+        duplicated = df[df[FRAME].isin(df[df[FRAME].duplicated()][FRAME])][
+            TRACKID
+        ].value_counts()
+
+        if len(duplicated) < 1:
+            return df
+
+        # duplicated track id
+        duplicated_tracks = duplicated.index.values
+        # number of duplication
+        duplicated_values = duplicated.values
+
+        # count number of timepoints per track
+        count_tracks_length = df[TRACKID].value_counts()
+
+        # if number of track is 1, by definition there is no overlapping
+        if len(count_tracks_length) == 1:
+            return df
+
+        # count track length of overlapping tracks
+        count_tracks_overlapping = count_tracks_length[
+            count_tracks_length.index.isin(duplicated_tracks)
+        ]
+
+        # extract track id of shortest overlapping tracks
+        shortest_track_overlapping_idx = count_tracks_overlapping.idxmin()
+
+        # too long overlaps?
+        toolong = False
+        for track, value in zip(duplicated_tracks, duplicated_values):
+            fraction = value / len(df[df[TRACKID] == track])
+            if fraction > max_overlaps:
+                toolong = True
+
+        # if we found too many overlaps, remove shortest track and restart
+        if toolong:
+            df = df[df[TRACKID] != shortest_track_overlapping_idx].copy()
+
+        # if no too long overlaps, remove duplicates and return dataframe
+        if not toolong:
+            df = df.drop_duplicates(FRAME)
+            return df
+
+
+def stitch(df: pd.DataFrame, max_dist: float = 2.5, max_overlaps: float = 0.1):
+    """Stitch tracks with the same cell id. If tracks overlap, filters out
+    tracks with overlap higher than max_overlaps. Overlapping frames are filtered out randomly.
+
+    Arg:
+       df: dataframe containing the tracked data.
+       max_dist: maximum distance to match tracks from the same cell.
+       max_overlaps: maximum overlap allowed for each track.
+
+    Return:
+       dataframe with stitched tracks."""
+
+    res = pd.DataFrame()
+    # if found overlapping tracks, do not stitch
+    for cell, sub in df.groupby(CELLID):
+        if np.sum(sub[FRAME].duplicated()) > 0:
+            sub = filter_overlapping(df=sub, max_overlaps=max_overlaps)
+
+        sub = sub.sort_values(FRAME).reset_index(drop=True)
+        idx = sub[sub[TRACKID].diff() != 0].index.values[
+            1:
+        ]  # remove first value id df which is always different from none
+        trackids = sub.loc[np.unique([idx, idx - 1]), TRACKID].values
+        sub1 = sub.loc[idx]
+        sub2 = sub.loc[idx - 1]
+        dists = np.sqrt(
+            np.sum(np.square(sub1[[X, Y, Z]].values - sub2[[X, Y, Z]].values), axis=1)
+        )
+        lastidx = 0
+        for index in np.arange(len(dists)):
+            if dists[index] < max_dist:
+                sub.loc[sub[TRACKID] == trackids[index + 1], TRACKID] = trackids[
+                    lastidx
+                ]
+            else:
+                lastidx = index
+        res = pd.concat([res, sub])
+
+    return res
 
 
 def calculate_single_dist(sub_df1, sub_df2, cost=True):
