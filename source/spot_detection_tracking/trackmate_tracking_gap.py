@@ -104,7 +104,7 @@ settings.trackerSettings["ALLOW_TRACK_SPLITTING"] = False
 settings.trackerSettings["ALLOW_TRACK_MERGING"] = False
 settings.trackerSettings["ALLOW_GAP_CLOSING"] = True
 settings.trackerSettings["GAP_CLOSING_MAX_DISTANCE"] = 1.6
-settings.trackerSettings["MAX_FRAME_GAP"] = 10
+settings.trackerSettings["MAX_FRAME_GAP"] = 7
 
 
 
