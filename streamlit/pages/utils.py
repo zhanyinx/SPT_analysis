@@ -119,10 +119,13 @@ def rle(inarray):
         i = np.append(np.where(y), n - 1)  # must include last element posi
         z = np.diff(np.append(-1, i))  # run lengths
         p = np.cumsum(np.append(0, z))[:-1]  # positions
-        return (z, p, ia[i])
+        return (
+            z[1:][:-1],
+            p[1:][:-1],
+            ia[i][1:][:-1],
+        )  # remove first and last elements for which time is ill defined
 
 
-@st.cache
 def contact_duration_second_passage_time(
     df: pd.DataFrame,
     resolution: float,
@@ -146,9 +149,34 @@ def contact_duration_second_passage_time(
         duration = []
         second_passage_time = []
         for _, sub in subgroup.groupby(trackid):
+            # calculate length, start position and type of a vector elements
             length, position, types = rle(sub[distance] < contact_cutoff)
-            duration.append(length[np.where(types == True)])
-            second_passage_time.append(length[np.where(types == False)][1:][:-1])
+
+            # calculate the start index of True (contact)
+            start = position[np.where(types == True)]
+            # calculate the end index of True (contact)
+            end = np.array(
+                [x + y for x, y in zip(start, length[np.where(types == True)])]
+            )
+            # calculate the duration of contact
+            duration_tmp = (
+                sub.iloc[end]["frame"].values - sub.iloc[start]["frame"].values
+            )
+            duration.append(duration_tmp)
+
+            # calculate the start index of loss of contact (False)
+            start = position[np.where(types == False)][1:]
+            # calculate the end index of missing contact (false)
+            end = np.array(
+                [x + y for x, y in zip(start, length[np.where(types == False)][1:])]
+            )
+
+            # calculate the duration of contact
+            second_passage_time_tmp = (
+                sub.iloc[end]["frame"].values - sub.iloc[start]["frame"].values
+            )
+            second_passage_time.append(second_passage_time_tmp)
+
         tmp = pd.DataFrame(np.concatenate(duration), columns=["contact_duration"])
         tmp[split] = condition
         duration_df = pd.concat([duration_df, tmp])

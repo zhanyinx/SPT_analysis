@@ -57,7 +57,7 @@ def pairwise_analysis():
     ## calculate contact duration and second passage time
     duration, second_passage_time = contact_duration_second_passage_time(
         df=data,
-        resolution=interval,
+        resolution=1,
         contact_cutoff=contact_cutoff,
         trackid="uniqueid",
         distance="distance",
