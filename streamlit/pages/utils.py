@@ -126,7 +126,8 @@ def rle(inarray):
         )  # remove first and last elements for which time is ill defined
 
 
-def contact_duration_second_passage_time(
+@st.cache
+def contact_duration_second_passage_time_inclusive(
     df: pd.DataFrame,
     resolution: float,
     contact_cutoff: float = 0.1,
@@ -135,6 +136,7 @@ def contact_duration_second_passage_time(
     split: str = "condition",
 ):
     """Return DataFrame of contact duration and second passage time across all matched tracks within the provided DataFrame.
+    All values, including those overlapping with gaps in tracking/stitching will be included.
 
     Args:
         df: dataframe containing the distance between two channels across all matched tracks.
@@ -191,4 +193,52 @@ def contact_duration_second_passage_time(
     second_passage_time_df["second_passage_time"] *= resolution
     duration_df = duration_df.reset_index()
     second_passage_time_df = second_passage_time_df.reset_index()
+    return duration_df, second_passage_time_df
+
+
+@st.cache
+def contact_duration_second_passage_time_exclusive(
+    df: pd.DataFrame,
+    resolution: float,
+    contact_cutoff: float = 0.1,
+    trackid: str = "uniqueid",
+    distance: str = "distance",
+    split: str = "condition",
+):
+    """Return DataFrame of contact duration and second passage time across all matched tracks within the provided DataFrame.
+    Values overlapping with gaps in tracking/stitching are included.
+
+    Args:
+        df: dataframe containing the distance between two channels across all matched tracks.
+        contact_cutoff: distance to define a contact.
+        trackid: column name of the trackid in df.
+        distance: column name of distance in df.
+        split: column name to split the df into different conditions.
+    """
+    duration_df = pd.DataFrame()
+    second_passage_time_df = pd.DataFrame()
+    for condition, subgroup in df.groupby(split):
+        duration = []
+        second_passage_time = []
+        for _, sub1 in subgroup.groupby(trackid):
+            print(sub1.frame - np.arange(len(sub1)))
+            for _, sub in sub1.groupby(sub1.frame - np.arange(len(sub1))):
+                length, position, types = rle(sub[distance] < contact_cutoff)
+                duration.append(length[np.where(types == True)][1:])
+                second_passage_time.append(length[np.where(types == False)][1:][:-1])
+
+        tmp = pd.DataFrame(np.concatenate(duration), columns=["contact_duration"])
+        tmp[split] = condition
+        duration_df = pd.concat([duration_df, tmp])
+        tmp = pd.DataFrame(
+            np.concatenate(second_passage_time), columns=["second_passage_time"]
+        )
+        tmp[split] = condition
+        second_passage_time_df = pd.concat([second_passage_time_df, tmp])
+
+    duration_df["contact_duration"] *= resolution
+    second_passage_time_df["second_passage_time"] *= resolution
+    duration_df = duration_df.reset_index()
+    second_passage_time_df = second_passage_time_df.reset_index()
+    print(duration_df)
     return duration_df, second_passage_time_df

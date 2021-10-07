@@ -32,7 +32,6 @@ def pairwise_analysis():
     # load and make a copy of original data
     original_data = load_data(f"{sample_name}.csv.zip")
     data = original_data.copy()
-    data["frame"] *= interval
 
     # extract cell lines
     clines = list(data["cell_line"].unique())
@@ -55,14 +54,28 @@ def pairwise_analysis():
     # Take input from user for time resultion of acquisition
     contact_cutoff = float(st.sidebar.text_input("contact cutoff (um)", "0.1"))
     ## calculate contact duration and second passage time
-    duration, second_passage_time = contact_duration_second_passage_time(
-        df=data,
-        resolution=1,
-        contact_cutoff=contact_cutoff,
-        trackid="uniqueid",
-        distance="distance",
-        split="condition",
-    )
+    if st.sidebar.checkbox(
+        "Check to exclude gaps (it will truncate the duration when it encounters a gap)"
+    ):
+        duration, second_passage_time = contact_duration_second_passage_time_exclusive(
+            df=data,
+            resolution=interval,
+            contact_cutoff=contact_cutoff,
+            trackid="uniqueid",
+            distance="distance",
+            split="condition",
+        )
+    else:
+        duration, second_passage_time = contact_duration_second_passage_time_inclusive(
+            df=data,
+            resolution=interval,
+            contact_cutoff=contact_cutoff,
+            trackid="uniqueid",
+            distance="distance",
+            split="condition",
+        )
+
+    data["frame"] *= interval
 
     # Plotting
     st.subheader("Distribution of radial distances across all selected movies")
