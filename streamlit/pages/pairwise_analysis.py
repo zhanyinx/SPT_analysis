@@ -124,6 +124,10 @@ def pairwise_analysis():
     col1, col2 = st.columns(2)
     fig = plt.figure()
     sub = data[data["uniqueid"] == options[select]].copy()
+    st.text(
+        f"Info of selected track:\n Movie: {sub.filename.unique()} \n cellid: {sub.cell.unique()} \n track: {sub.track.unique()}"
+    )
+
     plt.errorbar(x=sub["frame"], y=sub["distance"], yerr=sub["sigma_d"])
     plt.xlabel("Time (seconds)")
     plt.ylabel("Radial distance (um)")
