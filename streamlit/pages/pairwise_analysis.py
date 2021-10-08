@@ -113,6 +113,7 @@ def pairwise_analysis():
     )
 
     st.subheader("Radial distance and ecdf plots")
+    col1, col2 = st.columns(2)
     options = data.uniqueid.unique()
     select = st.slider(
         "Choose an example trajectory index",
@@ -121,7 +122,9 @@ def pairwise_analysis():
         value=1,
         step=1,
     )
-    col1, col2 = st.columns(2)
+    isfixed = st.checkbox("Check to fix y-axis.", value=True)
+    if isfixed:
+        ymax = st.number_input("Max y-axis", value=1.5)
     fig = plt.figure()
     sub = data[data["uniqueid"] == options[select]].copy()
     st.text(
@@ -132,6 +135,8 @@ def pairwise_analysis():
     plt.xlabel("Time (seconds)")
     plt.ylabel("Radial distance (um)")
     plt.title(sub.condition.values[0])
+    if isfixed:
+        plt.ylim(0, ymax)
     col1.pyplot(fig)
     plt.show()
     plt.savefig("plot.pdf")
@@ -158,8 +163,13 @@ def pairwise_analysis():
         unsafe_allow_html=True,
     )
 
-    st.subheader("Contact duration and first passage time histograms")
+    st.subheader("Contact duration histograms and ecdf")
     col1, col2 = st.columns(2)
+
+    isfixed = st.checkbox("Check to fix x-axis.", value=True)
+    if isfixed:
+        xmax = st.number_input("Max x-axis", value=500.0)
+
     fig = plt.figure()
     legend = []
     maximum = np.max(duration["contact_duration"])
@@ -167,10 +177,15 @@ def pairwise_analysis():
     for name, sub in duration.groupby("condition"):
         plt.hist(sub["contact_duration"], alpha=0.5, density=True, bins=bins)
         legend.append(name)
-    plt.xlim(0, maximum + 1)
+
+    if isfixed:
+        plt.xlim(0, xmax)
+    else:
+        plt.xlim(0, maximum)
     plt.legend(legend)
     plt.xlabel("Contact duration")
     plt.ylabel("Density")
+
     col1.pyplot(fig)
     plt.show()
     plt.savefig("plot.pdf")
@@ -181,6 +196,30 @@ def pairwise_analysis():
         ),
         unsafe_allow_html=True,
     )
+
+    fig = plt.figure()
+    ax = sns.ecdfplot(duration, x="contact_duration", hue="condition")
+    plt.xlabel("contact duration (seconds)")
+    plt.ylabel("ECDF")
+    if isfixed:
+        plt.xlim(0, xmax)
+
+    col2.pyplot(fig)
+    plt.show()
+    plt.savefig("plot.pdf")
+    st.markdown(
+        download_plot(
+            "plot.pdf",
+            "Download left plot",
+        ),
+        unsafe_allow_html=True,
+    )
+
+    st.subheader("First passage time histogram and ecdf")
+    col1, col2 = st.columns(2)
+    isfixed = st.checkbox("Check to fix x-axis of first passage time.", value=True)
+    if isfixed:
+        xmax = st.number_input("Max x-axis", value=1500.0)
 
     fig = plt.figure()
     legend = []
@@ -192,7 +231,9 @@ def pairwise_analysis():
     plt.legend(legend)
     plt.xlabel("Second passage time")
     plt.ylabel("Density")
-    col2.pyplot(fig)
+    if isfixed:
+        plt.xlim(0, xmax)
+    col1.pyplot(fig)
     plt.show()
     plt.savefig("plot.pdf")
     st.markdown(
@@ -203,28 +244,12 @@ def pairwise_analysis():
         unsafe_allow_html=True,
     )
 
-    st.subheader("Contact duration and first passage time ecdf")
-    col1, col2 = st.columns(2)
-
-    fig = plt.figure()
-    ax = sns.ecdfplot(duration, x="contact_duration", hue="condition")
-    plt.xlabel("contact duration (seconds)")
-    plt.ylabel("ECDF")
-    col1.pyplot(fig)
-    plt.show()
-    plt.savefig("plot.pdf")
-    st.markdown(
-        download_plot(
-            "plot.pdf",
-            "Download left plot",
-        ),
-        unsafe_allow_html=True,
-    )
-
     fig = plt.figure()
     ax = sns.ecdfplot(second_passage_time, x="second_passage_time", hue="condition")
     plt.xlabel("second passage time (seconds)")
     plt.ylabel("ECDF")
+    if isfixed:
+        plt.xlim(0, xmax)
     col2.pyplot(fig)
     plt.show()
     plt.savefig("plot.pdf")
