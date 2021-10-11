@@ -137,18 +137,6 @@ def main():
         channel1 = filter_tracks(channel1, min_length=args.min_length)
         channel2 = filter_tracks(channel2, min_length=args.min_length)
 
-        if args.stitch:
-            channel1 = stitch(
-                df=channel1,
-                max_dist=args.distance_cutoff_stitching,
-                max_overlaps=args.max_overlaps,
-            )
-            channel2 = stitch(
-                df=channel2,
-                max_dist=args.distance_cutoff_stitching,
-                max_overlaps=args.max_overlaps,
-            )
-
         # correct for chromatic aberration
         if args.beads:
             coords = channel2[[X, Y, Z]].values
@@ -160,6 +148,18 @@ def main():
                 quality=f"{outdir}/chromatic_aberration_correction_quality.pdf",
             )
             channel2[[X, Y, Z]] = coords_corrected
+
+        if args.stitch:
+            channel1 = stitch(
+                df=channel1,
+                max_dist=args.distance_cutoff_stitching,
+                max_overlaps=args.max_overlaps,
+            )
+            channel2 = stitch(
+                df=channel2,
+                max_dist=args.distance_cutoff_stitching,
+                max_overlaps=args.max_overlaps,
+            )
 
         # assign tracks between channels
         res = merge_channels(
