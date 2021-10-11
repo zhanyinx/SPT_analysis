@@ -7,6 +7,7 @@ import pandas as pd
 import scipy.optimize as opt
 import tensorflow as tf
 import trackpy as tp
+import scipy
 
 
 def detect_spots(
@@ -207,3 +208,113 @@ def print_results(results: pd.DataFrame):
             f"    F1 integral @3px: {f1i_m} ± {f1i_s}\n"
             f"    RMSE @3px: {rmse_m} ± {rmse_s}\n"
         )
+
+
+def calculate_rototranslation_3D(A, B, distance_cutoff=1):
+    """Return translation and rotation matrices.
+    Args:
+        A: coordinates of fixed set of points.
+        B: coodinates of moving set of points (to which roto translation needs to be applied).
+
+    Return:
+        R, t: rotation and translation matrix
+    """
+
+    cdist = scipy.spatial.distance.cdist(A, B, metric="euclidean")
+    rows, cols = scipy.optimize.linear_sum_assignment(cdist)
+    for r, c in zip(rows, cols):
+        if cdist[r, c] > distance_cutoff:
+            rows = rows[rows != r]
+            cols = cols[cols != c]
+
+    if len(rows) < 4:
+        return None, None
+
+    A = np.array([A[i] for i in rows])
+    B = np.array([B[i] for i in cols])
+
+    A = np.transpose(A)
+    B = np.transpose(B)
+
+    num_rows, num_cols = A.shape
+
+    if num_rows != 3:
+        raise Exception(f"matrix A is not 3xN, it is {num_rows}x{num_cols}")
+
+    num_rows, num_cols = B.shape
+    if num_rows != 3:
+        raise Exception(f"matrix B is not 3xN, it is {num_rows}x{num_cols}")
+
+    # find mean column wise
+    centroid_A = np.mean(A, axis=1)
+    centroid_B = np.mean(B, axis=1)
+
+    # ensure centroids are 3x1
+    centroid_A = centroid_A.reshape(-1, 1)
+    centroid_B = centroid_B.reshape(-1, 1)
+
+    # subtract mean
+    Am = A - centroid_A
+    Bm = B - centroid_B
+
+    H = Am @ np.transpose(Bm)
+
+    # find rotation
+    U, S, Vt = np.linalg.svd(H)
+    R = Vt.T @ U.T
+
+    # special reflection case
+    if np.linalg.det(R) < 0:
+        Vt[2, :] *= -1
+        R = Vt.T @ U.T
+
+    t = -R @ centroid_A + centroid_B
+
+    return R, t
+
+
+def rototranslation_correction_cell(df):
+    """Return corrected dataframe given a dataframe with coordinate as input."""
+    frames = sorted(df["frame"].unique())
+    prev_df = df[df["frame"] == frames[0]].copy()
+    out = prev_df.copy()
+    out[["xres", "yres", "zres"]] = 0
+
+    rotation = []
+    degree_rotation = []
+    translation = []
+    degree_translation = []
+    for idx in np.arange(1, len(frames)):
+        curr_df = df[df["frame"] == frames[idx]].copy()
+        prev = prev_df[["x", "y", "z"]].values
+        curr = curr_df[["x", "y", "z"]].values
+        R, t = calculate_rototranslation_3D(curr, prev)
+        if R is None:
+            continue
+        # from http://motion.cs.illinois.edu/RoboticSystems/3DRotations.html
+        degree_rotation.append(np.arccos((np.trace(R) - 1) / 2))
+        degree_translation.append(np.sqrt(np.sum(np.square(t))))
+        rotation.append(R)
+        translation.append(t)
+
+        prev_df = curr_df.copy()
+        rang = np.arange(len(rotation))
+        original_pos = curr.copy()
+        for j in rang[::-1]:
+            if rotation[j] is not None:
+                curr = np.transpose(rotation[j] @ curr.T + translation[j])
+        curr_df[["x", "y", "z"]] = curr
+        curr_df[["xres", "yres", "zres"]] = curr - original_pos
+        out = pd.concat([out, curr_df])
+    out["degree_av_rotation"] = np.mean(degree_rotation)
+    out["degree_av_translation"] = np.mean(degree_translation)
+    return out
+
+
+def rototranslation_correction_movie(df):
+    out = pd.DataFrame()
+    for _, cell_df in df.groupby("cell"):
+        corrected = rototranslation_correction_cell(cell_df)
+        out = pd.concat([out, corrected])
+
+    return out
