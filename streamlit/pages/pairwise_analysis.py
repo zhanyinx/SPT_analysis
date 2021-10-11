@@ -33,6 +33,17 @@ def pairwise_analysis():
     original_data = load_data(f"{sample_name}.csv.zip")
     data = original_data.copy()
 
+    # if 2D, recalculate all distances
+    if st.sidebar.checkbox("Check to switch to 2D analysis on distances"):
+        data["distance"] = np.sqrt(np.sum(np.square(data[["x", "y"]].values), axis=1))
+        data["sigma_d"] = (
+            np.sqrt(
+                (data["x"].values * data["sigma_x"]) ** 2
+                + (data["y"].values * data["sigma_y"]) ** 2
+            )
+            / data["distance"]
+        )
+
     # extract cell lines
     clines = list(data["cell_line"].unique())
     clines.append("All")

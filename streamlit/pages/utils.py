@@ -206,7 +206,7 @@ def contact_duration_second_passage_time_exclusive(
     split: str = "condition",
 ):
     """Return DataFrame of contact duration and second passage time across all matched tracks within the provided DataFrame.
-    Values overlapping with gaps in tracking/stitching are included.
+    Values overlapping with gaps in tracking/stitching are excluded.
 
     Args:
         df: dataframe containing the distance between two channels across all matched tracks.
