@@ -4,13 +4,13 @@ LIST_SAMPLES_MSD = {
     "rad21_rototranslation": "https://drive.google.com/uc?export=download&id=1bN1fOQCtJrm991LvLHLKXCluKF_BOr8X",
     "rousetime": "https://drive.google.com/uc?export=download&id=1aMj2c6TkIN3NfKmRzD6-bCjcUz424Mf8",
     "lauradata": "https://drive.google.com/uc?export=download&id=1MAxNdi9zkOlZB-EHNlaZRlXAAEAX_fBT",
-    "twocolor_degron": "https://drive.google.com/uc?export=download&id=1B4nrjr3psLRGaLJILWpuSeCf_AqVeSBt"
+    "twocolor_degron": "https://drive.google.com/uc?export=download&id=1E-W_4G2mfSWRuPz6POL1CY29Cqkccj0-"
     #    "directionality": "https://drive.google.com/uc?export=download&id=1WyP8p82md9HMZLQaqTnV9Hnt5ymGUpKx",
 }
 
 
 LIST_SAMPLES_PAIRWISE = {
-    "twocolor_degron_pairwise": "https://drive.google.com/uc?export=download&id=1zanFnOVhmEilD_PA9T0glFjsw4h2rWL5"
+    "twocolor_degron_pairwise": "https://drive.google.com/uc?export=download&id=1SHKH95xJLPHqoe6HLGLgHZCUhfwBp38s"
 }
 
 PICKLED_DFS = {
