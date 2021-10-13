@@ -131,11 +131,9 @@ def main():
     for channel1, channel2 in zip(channel1_files, channel2_files):
         outname = os.path.basename(channel1).replace("w1", "w1.w2")
 
-        # read movies and filter tracks
+        # read movies
         channel1 = pd.read_csv(channel1)
         channel2 = pd.read_csv(channel2)
-        channel1 = filter_tracks(channel1, min_length=args.min_length)
-        channel2 = filter_tracks(channel2, min_length=args.min_length)
 
         # correct for chromatic aberration
         if args.beads:
@@ -160,6 +158,10 @@ def main():
                 max_dist=args.distance_cutoff_stitching,
                 max_overlaps=args.max_overlaps,
             )
+
+        # filter too short tracks
+        channel1 = filter_tracks(channel1, min_length=args.min_length)
+        channel2 = filter_tracks(channel2, min_length=args.min_length)
 
         # assign tracks between channels
         res = merge_channels(

@@ -144,25 +144,43 @@ def stitch(df: pd.DataFrame, max_dist: float = 2.5, max_overlaps: float = 0.1):
     for cell, sub in df.groupby(CELLID):
         if np.sum(sub[FRAME].duplicated()) > 0:
             sub = filter_overlapping(df=sub, max_overlaps=max_overlaps)
-
         sub = sub.sort_values(FRAME).reset_index(drop=True)
         idx = sub[sub[TRACKID].diff() != 0].index.values[
             1:
         ]  # remove first value id df which is always different from none
-        trackids = sub.loc[np.unique([idx, idx - 1]), TRACKID].values
+
+        # track ids
+        trackids = sub.loc[np.unique([idx - 1, idx]), TRACKID].values
+        indexes = np.unique(trackids, return_index=True)[1]
+        trackids = np.array([trackids[index] for index in sorted(indexes)])
+
         sub1 = sub.loc[idx]
         sub2 = sub.loc[idx - 1]
         dists = np.sqrt(
             np.sum(np.square(sub1[[X, Y, Z]].values - sub2[[X, Y, Z]].values), axis=1)
         )
         lastidx = 0
-        for index in np.arange(len(dists)):
+        for index in np.arange(len(trackids) - 1):
+            # select all transition between two tracks
+            selection = (
+                (sub1[TRACKID] == trackids[index]).values
+                & (sub2[TRACKID] == trackids[index + 1]).values
+            ) | (
+                (sub1[TRACKID] == trackids[index + 1]).values
+                & (sub2[TRACKID] == trackids[index]).values
+            )
+
+            # if jumping between tracks occur multiple times, take the shortest distance
+            if np.sum(selection) > 1:
+                dist = np.min(dists[selection])
+            else:
+                dist = dists[selection]
             if dists[index] < max_dist:
                 sub.loc[sub[TRACKID] == trackids[index + 1], TRACKID] = trackids[
                     lastidx
                 ]
             else:
-                lastidx = index
+                lastidx = index + 1
         res = pd.concat([res, sub])
 
     return res
