@@ -39,6 +39,14 @@ def _parse_args():
         help="Minimum number of points to calculate tamsd.",
     )
     parser.add_argument(
+        "-mt",
+        "--min_tracks",
+        type=int,
+        default=2,
+        required=False,
+        help="Minimum number of tracks per cell. Cells with fewer than min_tracks are filtered out.",
+    )
+    parser.add_argument(
         "-o",
         "--output",
         type=str,
@@ -75,9 +83,7 @@ def main():
 
     # Start parallelization
     dask.config.set(shuffle="disk")
-    dask.config.set(
-        {"temporary_directory": args.tmp}
-    ) 
+    dask.config.set({"temporary_directory": args.tmp})
     client = Client()
 
     trajectory_files = []
@@ -93,7 +99,10 @@ def main():
 
     # Filter tracks based on quality (length, number of tracks)
     res = client.map(
-        filter_track_single_movie, trajectory_files, min_length=args.min_length
+        filter_track_single_movie,
+        trajectory_files,
+        min_length=args.min_length,
+        min_tracks=args.min_tracks,
     )
     results = client.gather(res)
 

@@ -86,10 +86,15 @@ def calculate_all_tamsd(traj_file: str, min_points: int = 10, min_length: int = 
     return results
 
 
-def filter_track_single_movie(filename, min_length=10, max_num_trajs_per_cell=1000000):
+def filter_track_single_movie(
+    filename: str,
+    min_length: int = 10,
+    max_num_trajs_per_cell: int = 1000000,
+    min_tracks: int = 2,
+):
     """
     Given a file containing the trajectories of a movie, it filters out all tracks with
-    less than min_length timepoints; in addition it filters out cells with too little (<2)
+    less than min_length timepoints; in addition it filters out cells with too little (<min_tracks)
     or too many trajectories (> max_num_traj_per_cell).
     Input:
         filename: file containing the trajectories
@@ -125,7 +130,7 @@ def filter_track_single_movie(filename, min_length=10, max_num_trajs_per_cell=10
             else:
                 pure_df = pd.concat([pure_df, check_it])
             trajs[-1].append(1)
-        if len(trajs[-1]) < 2 or len(trajs[-1]) > max_num_trajs_per_cell:
+        if len(trajs[-1]) < min_tracks or len(trajs[-1]) > max_num_trajs_per_cell:
             for track in trs:
                 ssdf = sdf[sdf["track"] == track]
                 df = df.drop(ssdf.index, axis=0, errors="ignore")
