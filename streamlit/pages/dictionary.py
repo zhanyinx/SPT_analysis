@@ -3,7 +3,7 @@ LIST_SAMPLES_MSD = {
     "rad21_zhan_rototranslation": "https://drive.google.com/uc?export=download&id=1jPzZlfdJZj1Y33-q4Ev9_QB9yyLbzaYI",
     "rousetime": "https://drive.google.com/uc?export=download&id=1aMj2c6TkIN3NfKmRzD6-bCjcUz424Mf8",
     "lauradata": "https://drive.google.com/uc?export=download&id=1MAxNdi9zkOlZB-EHNlaZRlXAAEAX_fBT",
-    "twocolor_degron": "https://drive.google.com/uc?export=download&id=1E-W_4G2mfSWRuPz6POL1CY29Cqkccj0-"
+    "twocolor_degron": "https://drive.google.com/uc?export=download&id=125GzRSXLQelmkEVjxx-rEwCAewc9Yosu"
     #    "directionality": "https://drive.google.com/uc?export=download&id=1WyP8p82md9HMZLQaqTnV9Hnt5ymGUpKx",
 }
 
