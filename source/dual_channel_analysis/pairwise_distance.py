@@ -84,7 +84,7 @@ def _parse_args():
         "-ds",
         "--distance_cutoff_stitching",
         type=float,
-        default=2.5,
+        default=1.6,
         required=False,
         help="Maximum distance between allowed to joining tracks from same cells. Distance defined between closest frames.",
     )
@@ -92,7 +92,7 @@ def _parse_args():
         "-mo",
         "--max_overlaps",
         type=float,
-        default=0.1,
+        default=0.5,
         required=False,
         help="Maximum fraction overlapping allowed for overlapping tracks.",
     )

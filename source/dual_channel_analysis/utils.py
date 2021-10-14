@@ -69,8 +69,8 @@ def filter_tracks(df: pd.DataFrame, min_length: int = 10) -> pd.DataFrame:
     return df
 
 
-def filter_overlapping(df: pd.DataFrame, max_overlaps: float = 0.25):
-    """Return data.frame where tracks with overlaps higher than max_overlaps.
+def filter_overlapping(df: pd.DataFrame, max_overlaps: float = 0.5):
+    """Return data.frame where tracks with overlaps higher than max_overlaps are filtered out.
 
     Args:
         df: dataframe with tracks to stitch
@@ -127,7 +127,7 @@ def filter_overlapping(df: pd.DataFrame, max_overlaps: float = 0.25):
             return df
 
 
-def stitch(df: pd.DataFrame, max_dist: float = 2.5, max_overlaps: float = 0.1):
+def stitch(df: pd.DataFrame, max_dist: float = 1.6, max_overlaps: float = 0.5):
     """Stitch tracks with the same cell id. If tracks overlap, filters out
     tracks with overlap higher than max_overlaps. Overlapping frames are filtered out randomly.
 
@@ -140,47 +140,84 @@ def stitch(df: pd.DataFrame, max_dist: float = 2.5, max_overlaps: float = 0.1):
        dataframe with stitched tracks."""
 
     res = pd.DataFrame()
-    # if found overlapping tracks, do not stitch
+    # loop over cell (stitch only tracks from same cell)
     for cell, sub in df.groupby(CELLID):
+
+        # if we find any overlapping tracks, filter them out (either whole track or partial tracks)
         if np.sum(sub[FRAME].duplicated()) > 0:
             sub = filter_overlapping(df=sub, max_overlaps=max_overlaps)
         sub = sub.sort_values(FRAME).reset_index(drop=True)
+
+        # if we have only 1 track, skip stitching
+        if len(sub[TRACKID].unique()) == 1:
+            res = pd.concat([res, sub])
+            continue
+
+        # look for jumps between tracks in time
         idx = sub[sub[TRACKID].diff() != 0].index.values[
             1:
         ]  # remove first value id df which is always different from none
 
-        # track ids
+        # all jumping track ids
         trackids = sub.loc[np.unique([idx - 1, idx]), TRACKID].values
         indexes = np.unique(trackids, return_index=True)[1]
         trackids = np.array([trackids[index] for index in sorted(indexes)])
 
+        # find prev and after jump data frames (sub2 before, sub1 after jump)
         sub1 = sub.loc[idx]
         sub2 = sub.loc[idx - 1]
-        dists = np.sqrt(
-            np.sum(np.square(sub1[[X, Y, Z]].values - sub2[[X, Y, Z]].values), axis=1)
-        )
-        lastidx = 0
-        for index in np.arange(len(trackids) - 1):
-            # select all transition between two tracks
-            selection = (
-                (sub1[TRACKID] == trackids[index]).values
-                & (sub2[TRACKID] == trackids[index + 1]).values
-            ) | (
-                (sub1[TRACKID] == trackids[index + 1]).values
-                & (sub2[TRACKID] == trackids[index]).values
-            )
 
-            # if jumping between tracks occur multiple times, take the shortest distance
-            if np.sum(selection) > 1:
-                dist = np.min(dists[selection])
-            else:
-                dist = dists[selection]
-            if dists[index] < max_dist:
-                sub.loc[sub[TRACKID] == trackids[index + 1], TRACKID] = trackids[
-                    lastidx
-                ]
+        # vector containing all the stitched ids
+        lastidx = 0
+        stitched_trackids = [trackids[lastidx]]
+
+        for index in np.arange(len(trackids) - 1):
+            # if no jumping found between current and next track id, go back to previous tracks
+            back_iteration = 0
+
+            # loop until you find jumping between next track and some previous tracks
+            while True:
+                if index - back_iteration < 0:
+                    raise ValueError(
+                        "No jumping found between next track and any of previous one. Something is off.."
+                    )
+
+                # select all transition between two tracks
+                selection = (
+                    (sub1[TRACKID] == trackids[index - back_iteration]).values
+                    & (sub2[TRACKID] == trackids[index + 1]).values
+                ) | (
+                    (sub1[TRACKID] == trackids[index + 1]).values
+                    & (sub2[TRACKID] == trackids[index - back_iteration]).values
+                )
+
+                # if jumping between tracks occur multiple times, take the shortest distance
+                if np.sum(selection) > 0:
+                    dists = np.sqrt(
+                        np.sum(
+                            np.square(
+                                sub1.loc[selection, [X, Y, Z]].values
+                                - sub2.loc[selection, [X, Y, Z]].values
+                            ),
+                            axis=1,
+                        )
+                    )
+                    dist = np.min(dists)
+                    break
+                # if no jumping has been found, take previous track
+                else:
+                    back_iteration += 1
+
+            # if jumping has found, check distance
+            if dist < max_dist:
+                sub.loc[
+                    sub[TRACKID] == trackids[index + 1], TRACKID
+                ] = stitched_trackids[-1 - back_iteration]
+            # if jumping is too big, record the unstitched track id
             else:
                 lastidx = index + 1
+
+            stitched_trackids.append(trackids[lastidx])
         res = pd.concat([res, sub])
 
     return res
