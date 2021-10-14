@@ -26,12 +26,30 @@ def pairwise_analysis():
         sample_link = list_samples[sample_name]
         gdown.download(sample_link, f"{sample_name}.csv.zip")
 
-    # Take input from user for time resultion of acquisition
-    interval = float(st.sidebar.text_input("Acquisition time resolution", "10"))
+    # min track points
+    min_trackpoints = st.sidebar.number_input("Minimum track length.", 25)
 
     # load and make a copy of original data
     original_data = load_data(f"{sample_name}.csv.zip")
     data = original_data.copy()
+
+    if st.sidebar.checkbox("Check to filter out noisy 3D!"):
+        distance = np.sqrt(np.sum(np.square(data[["x", "y"]].values), axis=1))
+        distance = np.log2(data["distance"] / distance)
+        st.subheader("Below the distribution of ratio-distances between 3D and 2D.")
+        if st.button("Plot distribution"):
+            fig = plt.figure()
+            plt.hist(distance, density=True)
+            plt.xlabel("log2(Ratio 3D/2D)")
+            plt.show()
+            st.pyplot(fig)
+        threshold = st.number_input(
+            "Select the max ratio (in log 2 scale!) between 3D/2D (default 95 quantile)",
+            np.quantile(distance, 0.95),
+        )
+        data = data[distance < threshold]
+
+    data = filter_data(data, min_trackpoints)
 
     # if 2D, recalculate all distances
     if st.sidebar.checkbox("Check to switch to 2D analysis on distances"):
@@ -43,6 +61,9 @@ def pairwise_analysis():
             )
             / data["distance"]
         )
+
+    # Take input from user for time resultion of acquisition
+    interval = float(st.sidebar.text_input("Acquisition time resolution", "10"))
 
     # extract cell lines
     clines = list(data["cell_line"].unique())
@@ -126,11 +147,9 @@ def pairwise_analysis():
     st.subheader("Radial distance and ecdf plots")
     col1, col2 = st.columns(2)
     options = data.uniqueid.unique()
-    select = st.slider(
-        "Choose an example trajectory index",
-        min_value=0,
-        max_value=len(options) - 1,
-        value=1,
+    select = st.number_input(
+        f"Choose an example trajectory index. Max value {len(options) -1}",
+        value=0,
         step=1,
     )
     isfixed = st.checkbox("Check to fix y-axis.", value=True)

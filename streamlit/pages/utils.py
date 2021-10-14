@@ -17,7 +17,18 @@ def load_data(data: str, interval: float = None):
     return df
 
 
+@st.cache
+def filter_data(df: pd.DataFrame, min_points: int):
+    """Filter tracks with lower number of points"""
+    df_filtered = pd.DataFrame()
+    for _, sub in df.groupby("uniqueid"):
+        if len(sub) > min_points:
+            df_filtered = pd.concat([df_filtered, sub])
+    return df_filtered
+
+
 # Fit alpha and diffusion coefficient given 3 regimes
+@st.cache
 def fit_alpha_d(subset: pd.DataFrame, end1: float, end2: float):
     """Fit the alpha and D under the 3 different regimes separated by end1 and end2 values."""
     subset["loglags"] = np.log10(subset["lags"].values)
@@ -46,6 +57,7 @@ def fit_alpha_d(subset: pd.DataFrame, end1: float, end2: float):
     return df
 
 
+@st.cache
 def sample_specific_systematic_error(data: pd.DataFrame):
     """Subtract sample specific systematic error."""
     for celline in data["cell_line"].unique():
