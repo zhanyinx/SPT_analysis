@@ -1,10 +1,10 @@
 LIST_SAMPLES_MSD = {
     "rad21": "https://drive.google.com/uc?export=download&id=1UHfqftidv1MKOtnzhyXHNKVFQZPKIj2Z",
     "rad21_zhan_rototranslation": "https://drive.google.com/uc?export=download&id=1jPzZlfdJZj1Y33-q4Ev9_QB9yyLbzaYI",
+    "ctcf": "https://drive.google.com/uc?export=download&id=1y_hHx0vc7lN04kXpYpVkJVSlRiinOAex",
     "rousetime": "https://drive.google.com/uc?export=download&id=1aMj2c6TkIN3NfKmRzD6-bCjcUz424Mf8",
     "lauradata": "https://drive.google.com/uc?export=download&id=1MAxNdi9zkOlZB-EHNlaZRlXAAEAX_fBT",
-    "twocolor_degron": "https://drive.google.com/uc?export=download&id=125GzRSXLQelmkEVjxx-rEwCAewc9Yosu"
-    #    "directionality": "https://drive.google.com/uc?export=download&id=1WyP8p82md9HMZLQaqTnV9Hnt5ymGUpKx",
+    "twocolor_degron": "https://drive.google.com/uc?export=download&id=125GzRSXLQelmkEVjxx-rEwCAewc9Yosu",
 }
 
 
@@ -26,6 +26,7 @@ PAGES = {
 
 SYSTEMATIC_ERRORS = {
     "rad21": 0.0087,
+    "ctcf": 0.0087,
     "rousetime": 0.0025,
     "rad21_zhan_rototranslation": 0.0087,
     "lauradata": 0.0,
