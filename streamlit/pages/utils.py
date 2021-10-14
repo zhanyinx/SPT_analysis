@@ -28,7 +28,6 @@ def filter_data(df: pd.DataFrame, min_points: int):
 
 
 # Fit alpha and diffusion coefficient given 3 regimes
-@st.cache
 def fit_alpha_d(subset: pd.DataFrame, end1: float, end2: float):
     """Fit the alpha and D under the 3 different regimes separated by end1 and end2 values."""
     subset["loglags"] = np.log10(subset["lags"].values)
@@ -57,7 +56,6 @@ def fit_alpha_d(subset: pd.DataFrame, end1: float, end2: float):
     return df
 
 
-@st.cache
 def sample_specific_systematic_error(data: pd.DataFrame):
     """Subtract sample specific systematic error."""
     for celline in data["cell_line"].unique():
