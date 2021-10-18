@@ -335,11 +335,11 @@ def merge_channels(
 
 
 def register_points_using_euclidean_distance(
-    df1: pd.DataFrame, df2: pd.DataFrame, distance_cutoff: float = 0.1
+    reference_file: str, moving_file: str, distance_cutoff: float = 0.1
 ):
-    """Given two DataFrame, get the two sets of matched points"""
-    reference = pd.read_csv(df1)
-    moving = pd.read_csv(df2)
+    """Given file containing reference and moving coordinates, get the two sets of matched points"""
+    reference = pd.read_csv(reference_file)
+    moving = pd.read_csv(moving_file)
 
     reference = reference[[X, Y, Z]].values
     moving = moving[[X, Y, Z]].values
@@ -437,7 +437,9 @@ def compute_affine_transformation3d(
     # pool registred points from all bead images
     for reference, moving in zip(reference_files, moving_files):
         reference, moving = register_points_using_euclidean_distance(
-            df1=reference, df2=moving, distance_cutoff=distance_cutoff
+            reference_file=reference,
+            moving_file=moving,
+            distance_cutoff=distance_cutoff,
         )
 
         references.append(reference)
