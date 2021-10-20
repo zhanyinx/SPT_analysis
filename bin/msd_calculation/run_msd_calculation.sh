@@ -21,8 +21,9 @@ function help {
     echo "   -i|--input INPUT : input folder or single file containing the *_corrected.csv files from TrackMate or motion correction."
     echo "   -s|--scriptpath SCRIPTPATH : path to SPT analysis github folder path"
     echo "   [-l|--min_length MIN_LENGTH] : Minimum number of timepoints per trajectory, default 10."
-    echo "   [-p|--min_points MIN_POINTS] : Minimum number of points to calculate tamsd, default 5."
+    echo "   [-m|--min_tracks MIN_TRACKS] : Minimum number of tracks per cell. Cells with fewer tracks are filtered out."
     echo "   [-o|--output OUTPUT] : output csv name, default output.csv"
+    echo "   [-p|--min_points MIN_POINTS] : Minimum number of points to calculate tamsd, default 5."
     echo "   [-t|--tmp TMP] : scratch folder for temporary file, default ./scratch"
     echo "   [-u|--uncorrected_residual]: if defined, it will look for *_uncorrected.csv and *_residual.csv files and output them in the results."
     echo "   [-h|--help]: help"
@@ -35,12 +36,13 @@ for arg in "$@"; do
   shift
   case "$arg" in
       "--input") set -- "$@" "-i" ;;
-      "--scriptpath")   set -- "$@" "-s" ;;
       "--min_length")   set -- "$@" "-l" ;;
       "--min_points")   set -- "$@" "-p" ;;
+      "--min_tracks")   set -- "$@" "-m" ;;
       "--output")   set -- "$@" "-o" ;;
-      "--uncorrected_residual")   set -- "$@" "-u" ;;
+      "--scriptpath")   set -- "$@" "-s" ;;
       "--tmp")   set -- "$@" "-t" ;;
+      "--uncorrected_residual")   set -- "$@" "-u" ;;
        *)        set -- "$@" "$arg"
   esac
 done
@@ -49,18 +51,20 @@ input=""
 pathSPT=""
 min_length=10
 min_points=5
+min_tracks=2
 output="output.csv"
 tmp="./scratch"
 uncorrected_residual=1
 
-while getopts ":i:s:l:p:o:t:uh" OPT
+while getopts ":i:s:l:m:p:o:t:uh" OPT
 do
     case $OPT in
         i) input=$OPTARG;;
-        s) pathSPT=$OPTARG;;
         l) min_length=$OPTARG;;
-        p) min_points=$OPTARG;;
+	m) min_tracks=$OPTARG;;
         o) output=$OPTARG;;
+        p) min_points=$OPTARG;;
+        s) pathSPT=$OPTARG;;
         t) tmp=$OPTARG;;
         u) uncorrected_residual=0;;
         h) help ;;
@@ -94,8 +98,8 @@ if ! [ -d $pathSPT ]; then
 fi
 
 if [ $uncorrected_residual -eq 1 ]; then
-    python $pathSPT/source/msd_calculation/msd.py -i $input -ml $min_length -mp $min_points -o $output -t $tmp
+    python $pathSPT/source/msd_calculation/msd.py -i $input -ml $min_length -mp $min_points -o $output -t $tmp -mt $min_tracks
 else
-    python $pathSPT/source/msd_calculation/msd.py -i $input -ml $min_length -mp $min_points -o $output -t $tmp -ur
+    python $pathSPT/source/msd_calculation/msd.py -i $input -ml $min_length -mp $min_points -o $output -t $tmp -ur -mt $min_tracks
 fi
 
