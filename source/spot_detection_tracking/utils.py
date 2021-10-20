@@ -140,7 +140,7 @@ def gauss_single_spot(
     lower = [np.min(crop), 0, 0, 0, 0, 0, -np.inf]
     upper = [
         np.max(crop) + EPS,
-        crop_size * 2,
+        crop_size,
         crop_size,
         crop_size_z,
         np.inf,
