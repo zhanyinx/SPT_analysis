@@ -7,7 +7,7 @@
 
 
 function usage {
-    echo -e "usage : 01_tracking_cell_assignments_with_gaps.sh -i INPUT -s PATHSPT -f PATHFIJI -m PATHMASK [-h]"
+    echo -e "usage : 01_tracking_cell_assignments_with_gaps.sh -i INPUT -s PATHSPT -f PATHFIJI -m PATHMASK [-l LINK_DIST] [-g GAP_CLOSING_DIST] [-n NGAP_MAX] [-h]"
     echo -e "Use option -h|--help for more information"
 }
 
@@ -22,6 +22,9 @@ function help {
     echo "   -s|--scriptpath SCRIPTPATH : path to spt analysis github folder path"
     echo "   -f|--fijipath FIJIPATH : path to executable fiji (ImageJ-...64)"
     echo "   -m|--maskpath MASKPATH : path to masks used for cell id assignment"
+    echo "   [-l|--link_dist LINK_DIST] : linking distance for TrackMate"
+    echo "   [-g|--gap_closing_dist GAP_CLOSING_DIST] : gap closing distance for TrackMate"
+    echo "   [-n|--ngap_max NGAP_MAX] : maximum number of gaps allowed in TrackMate"
     echo "   [-h|--help]: help"
     exit;
 }
@@ -33,8 +36,11 @@ for arg in "$@"; do
   case "$arg" in
       "--input") set -- "$@" "-i" ;;
       "--fijipath")   set -- "$@" "-f" ;;
-      "--scriptpath")   set -- "$@" "-s" ;;
+      "--ngap_max")   set -- "$@" "-n" ;;
+      "--link_dist")   set -- "$@" "-l" ;;
+      "--gap_closing_dist")   set -- "$@" "-g" ;;
       "--maskpath")   set -- "$@" "-m" ;;
+      "--scriptpath")   set -- "$@" "-s" ;;
       "--help")   set -- "$@" "-h" ;;
        *)        set -- "$@" "$arg"
   esac
@@ -44,13 +50,19 @@ pathxml=""
 pathspt=""
 pathfiji=""
 pathmask=""
+link_dist=0.8
+gap_closing_dist=0.8
+ngap_max=1
 
-while getopts ":i:m:f:s:h" OPT
+while getopts ":i:m:f:s:l:g:n:h" OPT
 do
     case $OPT in
         i) pathxml=$OPTARG;;
         f) pathfiji=$OPTARG;;
         s) pathspt=$OPTARG;;
+        l) link_dist=$OPTARG;;
+        g) gap_closing_dist=$OPTARG;;
+        n) ngap_max=$OPTARG;;
         m) pathmask=$OPTARG;;
         h) help ;;
         \?)
@@ -108,7 +120,7 @@ fi
 basedir=`pwd`
 
 for file in `ls $pathxml/*xml`; do
-    echo "nice -n 19 $pathfiji --ij2 --headless --run $pathspt/source/spot_detection_tracking/trackmate_tracking_gap.py 'basedir=\"$basedir/tracks_gap\",xml=\"$file\"'" >> apporun.sh
+    echo "nice -n 19 $pathfiji --ij2 --headless --run $pathspt/source/spot_detection_tracking/trackmate_tracking_gap.py 'basedir=\"$basedir/tracks_gap\",xml=\"$file\",link_dist=\"$link_dist\",gap_closing_dist=\"$gap_closing_dist\",ngap_max=\"$ngap_max\"'" >> apporun.sh
 done
 
 sh apporun.sh

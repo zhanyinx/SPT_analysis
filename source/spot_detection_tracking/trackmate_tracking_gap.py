@@ -1,5 +1,8 @@
 # @ String xml
 # @ String basedir
+# @ String link_dist
+# @ String gap_closing_dist
+# @ String ngap_max
 
 from java.io import File
 import sys
@@ -99,12 +102,13 @@ reader.readSettings(
 )
 
 # overwrite tracking parameters
-settings.trackerSettings["LINKING_MAX_DISTANCE"] = 0.8
+
+settings.trackerSettings["LINKING_MAX_DISTANCE"] = float(link_dist)
 settings.trackerSettings["ALLOW_TRACK_SPLITTING"] = False
 settings.trackerSettings["ALLOW_TRACK_MERGING"] = False
 settings.trackerSettings["ALLOW_GAP_CLOSING"] = True
-settings.trackerSettings["GAP_CLOSING_MAX_DISTANCE"] = 1.6
-settings.trackerSettings["MAX_FRAME_GAP"] = 7
+settings.trackerSettings["GAP_CLOSING_MAX_DISTANCE"] = float(gap_closing_dist)#1.6
+settings.trackerSettings["MAX_FRAME_GAP"] = int(ngap_max)#7
 
 
 
