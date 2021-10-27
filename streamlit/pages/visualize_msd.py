@@ -61,7 +61,7 @@ def visualize_msd():
     induction_time = st.sidebar.multiselect(
         "Choose the induction times to keep",
         list(data["induction_time"].unique()),
-        default=list(data["induction_time"].unique()),
+        default=[x for x in data.induction_time.unique() if x in ["0min", "90min"]],
     )
 
     data = data[data["induction_time"].isin(induction_time)]
@@ -69,6 +69,9 @@ def visualize_msd():
     correction_type = st.sidebar.multiselect(
         "Choose the motion correction type",
         list(data["motion_correction_type"].unique()),
+        default="cellIDs_corrected"
+        if "cellIDs_corrected" in data["motion_correction_type"].unique()
+        else data["motion_correction_type"].unique()[0],
     )
     data = data[data["motion_correction_type"].isin(correction_type)]
 
@@ -91,7 +94,7 @@ def visualize_msd():
 
     # Options for plot
     pool_clones_replicates = st.checkbox("Pool clones and replicates")
-    pool_replicates = st.checkbox("Pool replicates")
+    pool_replicates = st.checkbox("Pool replicates", value=True)
     standard_deviation = st.checkbox(
         "Plot standard deviation instead of 68 confidence interval"
     )
@@ -189,7 +192,7 @@ def visualize_msd():
         st.dataframe(res)
 
     # Create table of alphas and Ds
-    st.subheader("Table of alphas and Ds")
+    st.subheader("Table of alphas and Ds (errors are SD of estimates)")
     df_alphas = pd.DataFrame(data.groupby(["lags", "condition"]).mean()["tamsd"])
     df_alphas.reset_index(inplace=True)
 
@@ -209,7 +212,7 @@ def visualize_msd():
 
     df = pd.DataFrame()
 
-    if st.checkbox("Use all data instead of average to fit"):
+    if st.checkbox("Use all data instead of average to fit", value=True):
         for condition in data["condition"].unique():
             subset = data[data["condition"] == condition]
             res = fit_alpha_d(subset, end1, end2)

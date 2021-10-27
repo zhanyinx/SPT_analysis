@@ -27,7 +27,10 @@ def filter_data(df: pd.DataFrame, min_points: int):
     return df_filtered
 
 
-# Fit alpha and diffusion coefficient given 3 regimes
+def myround(x):
+    return np.around(x, 6)
+
+
 def fit_alpha_d(subset: pd.DataFrame, end1: float, end2: float):
     """Fit the alpha and D under the 3 different regimes separated by end1 and end2 values."""
     subset["loglags"] = np.log10(subset["lags"].values)
@@ -38,18 +41,32 @@ def fit_alpha_d(subset: pd.DataFrame, end1: float, end2: float):
     r2 = subset[(subset["lags"] >= end1) & (subset["lags"] <= end2)].copy()
     r3 = subset[subset["lags"] > end2].copy()
 
-    a1, d1 = np.polyfit((r1["loglags"]), (r1["logtamsd"]), 1)
-    a2, d2 = np.polyfit((r2["loglags"]), (r2["logtamsd"]), 1)
-    a3, d3 = np.polyfit((r3["loglags"]), (r3["logtamsd"]), 1)
+    (a1, d1), cov1 = np.polyfit((r1["loglags"]), (r1["logtamsd"]), 1, cov=True)
+    sda1, sdd1 = np.sqrt(np.diag(cov1))
+
+    (a2, d2), cov2 = np.polyfit((r2["loglags"]), (r2["logtamsd"]), 1, cov=True)
+    sda2, sdd2 = np.sqrt(np.diag(cov2))
+
+    (a3, d3), cov3 = np.polyfit((r3["loglags"]), (r3["logtamsd"]), 1, cov=True)
+    sda3, sdd3 = np.sqrt(np.diag(cov3))
 
     minimum = np.min(r1["lags"])
     maximum = np.max(r3["lags"])
     regimes = [f"{minimum}-{end1}", f"{end1}-{end2}", f"{end2}-{maximum}"]
-
+    alphas = [
+        f"{myround(a1)} +/- {myround(sda1)}",
+        f"{myround(a2)} +/- {myround(sda2)}",
+        f"{myround(a3)} +/- {myround(sda3)}",
+    ]
+    ds = [
+        f"{myround(10**d1)} +/- {myround(sdd1 * np.abs(10**d1) * np.log(10))}",
+        f"{myround(10**d2)} +/- {myround(sdd2 * np.abs(10**d2) * np.log(10))}",
+        f"{myround(10**d3)} +/- {myround(sdd3 * np.abs(10**d3) * np.log(10))}",
+    ]
     df = pd.DataFrame(
         {
-            "alphas": [a1, a2, a3],
-            "Ds": [10 ** d1, 10 ** d2, 10 ** d3],
+            "alphas": alphas,
+            "Ds": ds,
             "Regimes": regimes,
         }
     )
