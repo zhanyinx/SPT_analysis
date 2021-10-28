@@ -115,7 +115,9 @@ def main():
     # list files
     channel1_files = sorted(glob.glob(f"{args.input}/*w1*csv"))
     names = [re.search(r"(^.*)w1", os.path.basename(x))[1] for x in channel1_files]
-    channel2_files = [glob.glob(f"{args.input}/{name}*w2*csv")[0] for name in names]
+    channel2_files = sorted(
+        glob.glob(f"{args.input}/*w2*csv")
+    )  # [glob.glob(f"{args.input}/{name}*w2*csv")[0] for name in names]
 
     if len(channel1_files) == 0:
         raise ValueError(f"No files found in the input directory {args.input}.")
