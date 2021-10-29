@@ -14,7 +14,12 @@ from .dictionary import (
 def pairwise_analysis():
 
     # Set title
-    st.title("Mean square displacement analysis")
+    st.title("Pairwise distance analysis")
+    st.write(
+        "Analysis is done on tracks with at least 25 timepoints. \
+        Noisy timepoints are filtered out. Noisy is defined as top 5% of \
+        ratio between distances in 3D/2D, where 2D distance is on xy only."
+    )
 
     # Samples
     list_samples = LIST_SAMPLES_PAIRWISE_DISTANCE
