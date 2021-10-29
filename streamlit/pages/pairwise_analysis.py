@@ -4,7 +4,11 @@ import matplotlib.pyplot as plt
 
 
 from .utils import *
-from .dictionary import LIST_SAMPLES_PAIRWISE
+from .dictionary import (
+    LIST_SAMPLES_PAIRWISE_DISTANCE,
+    LIST_SAMPLES_DURATION,
+    LIST_SAMPLES_SECOND_PASSAGE_TIME,
+)
 
 
 def pairwise_analysis():
@@ -13,7 +17,9 @@ def pairwise_analysis():
     st.title("Mean square displacement analysis")
 
     # Samples
-    list_samples = LIST_SAMPLES_PAIRWISE
+    list_samples = LIST_SAMPLES_PAIRWISE_DISTANCE
+    list_durations = LIST_SAMPLES_DURATION
+    list_second_passage_time = LIST_SAMPLES_SECOND_PASSAGE_TIME
 
     # Take input from user and load file and make a copy
     sample_name = st.sidebar.selectbox(
@@ -26,46 +32,38 @@ def pairwise_analysis():
         sample_link = list_samples[sample_name]
         gdown.download(sample_link, f"{sample_name}.csv.zip")
 
-    # min track points
-    min_trackpoints = st.sidebar.number_input("Minimum track length.", 25)
+    if not os.path.isfile(f"{sample_name}_duration.csv.zip"):
+        sample_link = list_durations[sample_name]
+        gdown.download(sample_link, f"{sample_name}_duration.csv.zip")
+
+    if not os.path.isfile(f"{sample_name}_second_passage_time.csv.zip"):
+        sample_link = list_second_passage_time[sample_name]
+        gdown.download(sample_link, f"{sample_name}_second_passage_time.csv.zip")
 
     # load and make a copy of original data
     original_data = load_data(f"{sample_name}.csv.zip")
     data = original_data.copy()
 
-    if st.sidebar.checkbox("Check to filter out noisy 3D!"):
-        distance = np.sqrt(np.sum(np.square(data[["x", "y"]].values), axis=1))
-        distance = np.log2(data["distance"] / distance)
-        st.subheader("Below the distribution of ratio-distances between 3D and 2D.")
-        if st.button("Plot distribution"):
-            fig = plt.figure()
-            plt.hist(distance, density=True)
-            plt.xlabel("log2(Ratio 3D/2D)")
-            plt.show()
-            st.pyplot(fig)
-        threshold = st.number_input(
-            "Select the max ratio (in log 2 scale!) between 3D/2D (default 95 quantile)",
-            np.quantile(distance, 0.95),
-        )
-        data = data[distance < threshold]
+    # load and make a copy of original data
+    original_duration = load_data(f"{sample_name}_duration.csv.zip")
+    duration = original_duration.copy()
+    duration[["cell_line", "induction_time"]] = duration["condition"].str.split(
+        "_", expand=True
+    )
 
-    data = filter_data(data, min_trackpoints)
-
-    # if 2D, recalculate all distances
-    if st.sidebar.checkbox("Check to switch to 2D analysis on distances"):
-        data["distance"] = np.sqrt(np.sum(np.square(data[["x", "y"]].values), axis=1))
-        data["sigma_d"] = (
-            np.sqrt(
-                (data["x"].values * data["sigma_x"]) ** 2
-                + (data["y"].values * data["sigma_y"]) ** 2
-            )
-            / data["distance"]
-        )
+    # load and make a copy of original data
+    original_second_passage_time = load_data(
+        f"{sample_name}_second_passage_time.csv.zip"
+    )
+    second_passage_time = original_second_passage_time.copy()
+    second_passage_time[["cell_line", "induction_time"]] = second_passage_time[
+        "condition"
+    ].str.split("_", expand=True)
 
     # Take input from user for time resultion of acquisition
     interval = float(st.sidebar.text_input("Acquisition time resolution", "10"))
 
-    # extract cell lines
+    # User input: select cell lines
     clines = list(data["cell_line"].unique())
     clines.append("All")
     cell_lines = st.sidebar.multiselect(
@@ -75,6 +73,10 @@ def pairwise_analysis():
     # Filter data to keep only the selected lines, induction time and correction type
     if not "All" in cell_lines:
         data = data[data["cell_line"].isin(cell_lines)]
+        duration = duration[duration["cell_line"].isin(cell_lines)]
+        second_passage_time = second_passage_time[
+            second_passage_time["cell_line"].isin(cell_lines)
+        ]
 
     induction_time = st.sidebar.multiselect(
         "Choose the induction times to keep",
@@ -82,32 +84,10 @@ def pairwise_analysis():
         default=list(data["induction_time"].unique()),
     )
     data = data[data["induction_time"].isin(induction_time)]
-
-    # Take input from user for time resultion of acquisition
-    contact_cutoff = float(st.sidebar.text_input("contact cutoff (um)", "0.1"))
-    ## calculate contact duration and second passage time
-    if st.sidebar.checkbox(
-        "Check to exclude gaps (it will truncate the duration when it encounters a gap)"
-    ):
-        duration, second_passage_time = contact_duration_second_passage_time_exclusive(
-            df=data,
-            resolution=interval,
-            contact_cutoff=contact_cutoff,
-            trackid="uniqueid",
-            distance="distance",
-            split="condition",
-        )
-    else:
-        duration, second_passage_time = contact_duration_second_passage_time_inclusive(
-            df=data,
-            resolution=interval,
-            contact_cutoff=contact_cutoff,
-            trackid="uniqueid",
-            distance="distance",
-            split="condition",
-        )
-
-    data["frame"] *= interval
+    duration = duration[duration["induction_time"].isin(induction_time)]
+    second_passage_time = second_passage_time[
+        second_passage_time["induction_time"].isin(induction_time)
+    ]
 
     # Plotting
     st.subheader("Distribution of radial distances across all selected movies")
@@ -192,6 +172,102 @@ def pairwise_analysis():
         ),
         unsafe_allow_html=True,
     )
+
+    st.subheader("Contact duration and second passage time across ngap, contact radius")
+    fig, ax = plt.subplots(2, 4, figsize=(20, 10))
+    for i in range(4):
+        for j in range(2):
+            cutoff = duration.contact_cutoff.unique()[i + j]
+            duration_cutoff = pd.DataFrame(
+                duration[duration.contact_cutoff == cutoff]
+                .groupby(["condition", "ngap"])
+                .mean()["contact_duration"]
+            )
+            duration_cutoff["condition"], duration_cutoff["ngap"] = zip(
+                *duration_cutoff.index
+            )
+
+            sns.lineplot(
+                x="ngap",
+                y="contact_duration",
+                hue="condition",
+                data=duration_cutoff,
+                ax=ax[j, i],
+            )
+            ax[j, i].set_xlabel("ngap allowed")
+            ax[j, i].set_ylabel("Average contact duration")
+            ax[j, i].set_title(f"distance cutoff {cutoff}")
+
+    st.pyplot(fig)
+    plt.show()
+    plt.savefig("plot.pdf")
+
+    # Dowload options
+    st.markdown(
+        download_plot(
+            "plot.pdf",
+            "Download plot",
+        ),
+        unsafe_allow_html=True,
+    )
+
+    fig, ax = plt.subplots(2, 4, figsize=(20, 10))
+    for i in range(4):
+        for j in range(2):
+            cutoff = second_passage_time.contact_cutoff.unique()[i + j]
+            second_passage_time_cutoff = pd.DataFrame(
+                second_passage_time[second_passage_time.contact_cutoff == cutoff]
+                .groupby(["condition", "ngap"])
+                .mean()["second_passage_time"]
+            )
+            (
+                second_passage_time_cutoff["condition"],
+                second_passage_time_cutoff["ngap"],
+            ) = zip(*second_passage_time_cutoff.index)
+
+            sns.lineplot(
+                x="ngap",
+                y="second_passage_time",
+                hue="condition",
+                data=second_passage_time_cutoff,
+                ax=ax[j, i],
+            )
+            ax[j, i].set_xlabel("ngap allowed")
+            ax[j, i].set_ylabel("Average second passage time")
+            ax[j, i].set_title(f"distance cutoff {cutoff}")
+
+    st.pyplot(fig)
+    plt.show()
+    plt.savefig("plot.pdf")
+
+    # Dowload options
+    st.markdown(
+        download_plot(
+            "plot.pdf",
+            "Download plot",
+        ),
+        unsafe_allow_html=True,
+    )
+
+    st.subheader(
+        "Select specific contact cutoff and number of allowed gaps for the all plots that follows"
+    )
+    # User input: cutoff for contact
+    contact_cutoffs = list(duration["contact_cutoff"].unique())
+    list_ngaps = list(duration["ngap"].unique())
+    contact_cutoff = float(
+        st.selectbox("Specific contact cutoff (um)", contact_cutoffs, index=0)
+    )
+
+    ngaps = int(st.selectbox("Specific number of gaps allowed", list_ngaps, index=0))
+
+    duration = duration[
+        (duration["ngap"] == ngaps) & (duration["contact_cutoff"] == contact_cutoff)
+    ]
+    second_passage_time = second_passage_time[
+        (second_passage_time["ngap"] == ngaps)
+        & (second_passage_time["contact_cutoff"] == contact_cutoff)
+    ]
 
     st.subheader("Contact duration histograms and ecdf")
     col1, col2 = st.columns(2)
