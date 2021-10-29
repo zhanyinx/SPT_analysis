@@ -10,10 +10,21 @@ LIST_SAMPLES_MSD = {
 }
 
 
-LIST_SAMPLES_PAIRWISE = {
-    "twocolor_degron_pairwise": "https://drive.google.com/uc?export=download&id=1SHKH95xJLPHqoe6HLGLgHZCUhfwBp38s",
+LIST_SAMPLES_PAIRWISE_DISTANCE = {
+    "twocolor_degron_pairwise": "https://drive.google.com/uc?export=download&id=19eMZvbk2p8wLRGvmtP-tJBtUGAzPAUWw",
     "twocolor_degron_pairwise_30s": "https://drive.google.com/uc?export=download&id=1ZWwKzrwactyJ2VDbkpGGZLe2U8Ic2T1u",
 }
+
+LIST_SAMPLES_DURATION = {
+    "twocolor_degron_pairwise": "https://drive.google.com/uc?export=download&id=1xaH4hbolAxM5sm1XB_i7nl8v-2wWo2sg",
+    "twocolor_degron_pairwise_30s": "https://drive.google.com/uc?export=download&id=1bpVzZkoF0TlWgrhDXHHINEkjKE4tJwCK",
+}
+
+LIST_SAMPLES_SECOND_PASSAGE_TIME = {
+    "twocolor_degron_pairwise": "https://drive.google.com/uc?export=download&id=1en5esI3h4DAq_jfODue4DvDLSPN_XG4K",
+    "twocolor_degron_pairwise_30s": "https://drive.google.com/uc?export=download&id=1GTWTvMawM737Nq0bIt4npMd0-FkbX1NG",
+}
+
 
 PICKLED_DFS = {
     "directionality": "https://drive.google.com/uc?export=download&id=1WyP8p82md9HMZLQaqTnV9Hnt5ymGUpKx",
