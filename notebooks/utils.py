@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+
 def rle(inarray, full=False):
     """Run length encoding. Partial credit to R rle function.
     Multi datatype arrays catered for including non Numpy
@@ -166,7 +167,7 @@ def contact_duration_second_passage_time_different_gaps(
     durations = pd.DataFrame()
     second_passage_times = pd.DataFrame()
     for ngap in np.arange(max_ngap + 1):
-        for _, sub in df.groupby("uniqueid"):
+        for _, sub in df.groupby(trackid):
             sub = sub.sort_values("frame")
             # calculate the differences between consecutive frames
             sub["diff"] = sub.frame - sub.frame.shift(1)
