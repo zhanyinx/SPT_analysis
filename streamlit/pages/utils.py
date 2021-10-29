@@ -17,16 +17,6 @@ def load_data(data: str, interval: float = None):
     return df
 
 
-@st.cache
-def filter_data(df: pd.DataFrame, min_points: int):
-    """Filter tracks with lower number of points"""
-    df_filtered = pd.DataFrame()
-    for _, sub in df.groupby("uniqueid"):
-        if len(sub) > min_points:
-            df_filtered = pd.concat([df_filtered, sub])
-    return df_filtered
-
-
 def myround(x):
     return np.around(x, 6)
 
