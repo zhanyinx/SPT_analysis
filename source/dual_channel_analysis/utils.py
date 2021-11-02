@@ -292,7 +292,7 @@ def merge_channels(
     while True:
         # calculate distance between tracks
         dist = calculate_distance(df1, df2, cost)
-        dist = dist.squeeze()
+        dist = dist.squeeze(axis=0)
 
         # match tracks
         rows, cols = scipy.optimize.linear_sum_assignment(dist)
@@ -411,6 +411,7 @@ def compute_affine_transformation3d(
     quality: str,
     channel_to_correct: int = 2,
     distance_cutoff: float = 0.1,
+    twod: bool = False,
 ):
     """Find affine transformation to go from spots within moving files to reference files.
 
@@ -423,6 +424,7 @@ def compute_affine_transformation3d(
         quality: Filename where to save quality of chromatic aberration correction on bead images.
         channel_to_correct: channel of moving channel, default channel 2.
         distance_cutoff: max distance for matching spots between reference and moving.
+        twod: if true, will perform 2d correction along xy.
 
     Return:
         A (3x3): Affine transformation matrix.
@@ -453,9 +455,14 @@ def compute_affine_transformation3d(
             f"Computing affine trasformation requires at least 4 points, provided {len(references)}"
         )
 
-    t, A = compute_affine_transform(references, movings)
+    if twod:
+        t, A = compute_affine_transform(references[..., :2], movings[..., :2])
+        newcoords = np.transpose(np.dot(A, movings[..., :2].T)) + t
+        newcoords = np.c_[newcoords, movings[..., 2]]
 
-    newcoords = np.transpose(np.dot(A, movings.T)) + t
+    if not twod:
+        t, A = compute_affine_transform(references, movings)
+        newcoords = np.transpose(np.dot(A, movings.T)) + t
     sx, sy, sz = chrom_aberration_quality(
         original1=references,
         original2=movings,
@@ -472,6 +479,7 @@ def chromatic_aberration_correction(
     quality: str,
     channel_to_correct: int = 2,
     distance_cutoff: float = 0.1,
+    twod: bool = False,
 ) -> np.ndarray:
     """Perform chromatic aberration correction and return corrected DataFrame.
 
@@ -481,6 +489,7 @@ def chromatic_aberration_correction(
         quality: Filename where to save quality of chromatic aberration correction on bead images.
         channel_to_correct: channel to correct, default channel 2.
         distance_cutoff: max distance for matching spots between reference and moving.
+        twod: if true, will perform 2d correction along xy.
 
     Return:
         Corrected coordinates and errors on x,y,z calculated from bead images.
@@ -509,9 +518,14 @@ def chromatic_aberration_correction(
         channel_to_correct=channel_to_correct,
         distance_cutoff=distance_cutoff,
         quality=quality,
+        twod=twod,
     )
 
-    newcoords = np.transpose(np.dot(A, coords.T)) + t
+    if not twod:
+        newcoords = np.transpose(np.dot(A, coords.T)) + t
+    if twod:
+        newcoords = np.transpose(np.dot(A, coords[..., :2].T)) + t
+        newcoords = np.c_[newcoords, coords[..., 2]]
 
     return newcoords, sx, sy, sz
 

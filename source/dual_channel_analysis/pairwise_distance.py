@@ -66,6 +66,13 @@ def _parse_args():
         help="Folder containing beads spots, if provided, it automatically performs chromatic aberration correction.",
     )
     parser.add_argument(
+        "-t",
+        "--twod",
+        dest="twod",
+        action="store_true",
+        help="If defined, it will perform chromatic aberration correction in 2d.",
+    )
+    parser.add_argument(
         "-dp",
         "--distance_cutoff_points",
         type=float,
@@ -146,6 +153,7 @@ def main():
                 channel_to_correct=2,
                 distance_cutoff=args.distance_cutoff_points,
                 quality=f"{outdir}/chromatic_aberration_correction_quality.pdf",
+                twod=args.twod,
             )
             channel2[[X, Y, Z]] = coords_corrected
 
