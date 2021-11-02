@@ -65,12 +65,21 @@ def main():
         img = skimage.io.imread(input_file)
         middle_slice = len(img) // 2
 
-        mask_nucl, *_ = cellpose_model.eval(
-            [np.max(img, axis=1)[middle_slice]],
-            diameter=150,
-            channels=[0, 0],
-            min_size=15,
-        )
+        if len(img.shape) == 4:
+            mask_nucl, *_ = cellpose_model.eval(
+                [np.max(img, axis=1)[middle_slice]],
+                diameter=150,
+                channels=[0, 0],
+                min_size=15,
+            )
+
+        if len(img.shape) == 3:
+            mask_nucl, *_ = cellpose_model.eval(
+                [img[middle_slice]],
+                diameter=150,
+                channels=[0, 0],
+                min_size=15,
+            )
 
         name = os.path.basename(input_file)
         out = f"{output}/{name}"
