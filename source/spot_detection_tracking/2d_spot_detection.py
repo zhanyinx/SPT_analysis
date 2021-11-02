@@ -109,6 +109,18 @@ def main():
     # Read movie
     movie = skimage.io.imread(args.input)
 
+    if len(movie.shape) == 2:
+        Warning(
+            f"Found image with shape = 2; assuming it's 2d data with a single time point."
+        )
+        movie = np.expand_dims(movie, axis=0)
+
+    print(movie.shape)
+    if len(movie.shape) < 2:
+        raise ValueError(
+            f"Expected at least 2 dimension, found only {len(movie.shape)}"
+        )
+
     # Detect spots
     df = detect_spots(movie, model)
 

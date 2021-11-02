@@ -592,6 +592,11 @@ def __create_settings(
     # Image metadata
     path, fname = os.path.split(file_image)
     image = skimage.io.imread(file_image)
+    if len(image.shape) == 2:
+        Warning(
+            f"Found image with shape = 2; assuming it's 3d data with a single time point."
+        )
+        image = np.expand_dims(image, axis=0)
     frames, width, height = image.shape
     imagedata = {
         "filename": fname,
@@ -727,6 +732,7 @@ def create_trackmate_xml(
     df = spots_df
     df["x"] = df["x"] * pixelwidth
     df["y"] = df["y"] * pixelheight
+    df["z"] = 1.0
 
     df.to_csv(file_output.replace("xml", "csv"))
 
