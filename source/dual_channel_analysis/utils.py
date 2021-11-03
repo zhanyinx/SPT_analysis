@@ -223,7 +223,15 @@ def stitch(df: pd.DataFrame, max_dist: float = 1.6, max_overlaps: float = 0.5):
     return res
 
 
+def calculate_distance_merged_channels(merged):
+    s1 = merged[[x + "_x" for x in [X, Y, Z]]].values
+    s2 = merged[[x + "_y" for x in [X, Y, Z]]].values
+    return np.mean(np.sum((s1 - s2) ** 2, axis=1))
+
+
 def calculate_single_dist(sub_df1, sub_df2, cost=True):
+    """Distance function for merging tracks. Eucledian distance scaled with sqrt of length.
+    If defined, cost for no-overlapping part of tracks is added."""
     min_len = np.min([len(sub_df1), len(sub_df2)])
     merged = pd.merge(sub_df1, sub_df2, how="inner", on=[FRAME])
     if not len(merged):
@@ -325,8 +333,11 @@ def merge_channels(
                 FRAME
             )
             df1, df2 = drop_matched(tmp, df1, df2)
-            tmp["uniqueid"] = secrets.token_hex(16)
-            results = pd.concat([results, tmp])
+            if not len(tmp):
+                continue
+            if calculate_distance_merged_channels(tmp) <= distance_cutoff:
+                tmp["uniqueid"] = secrets.token_hex(16)
+                results = pd.concat([results, tmp])
 
         if not recursive:
             return results
