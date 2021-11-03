@@ -157,6 +157,9 @@ def main():
             )
             channel2[[X, Y, Z]] = coords_corrected
 
+        channel1 = channel1[channel1[CELLID] != 0]
+        channel2 = channel2[channel2[CELLID] != 0]
+
         if args.stitch:
             channel1 = stitch(
                 df=channel1,
