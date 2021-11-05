@@ -67,6 +67,9 @@ def pairwise_analysis():
 
     # Take input from user for time resultion of acquisition
     interval = float(st.sidebar.text_input("Acquisition time resolution", "10"))
+    data["frame"] *= interval
+    duration["contact_duration"] *= interval
+    second_passage_time["second_passage_time"] *= interval
 
     # User input: select cell lines
     clines = list(data["cell_line"].unique())
