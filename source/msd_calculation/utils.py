@@ -86,6 +86,105 @@ def calculate_all_tamsd(traj_file: str, min_points: int = 10, min_length: int = 
     return results
 
 
+def calculate_pairwise_tamsd(
+    first_traj: pd.DataFrame, second_traj: pd.DataFrame, min_points: int = 2
+):
+    """Calculate trajectory average pairwise MSD at all lags.
+
+    Inputs:
+        first_traj: pd.DataFrame containing the coordinates of a one given trajectory
+        second_traj: pd.DataFrame containing the coordinates of another given trajectory
+        min_points: minimum number of points to calculate the time average MSD
+    Return:
+        df: pd.DataFrame containing lags and time average MSD"""
+    # Intersection two dataframes based on frames and calculate pairwise squared distances
+    s1 = pd.merge(
+        first_traj, second_traj, how="inner", on=["frame"], suffixes=("_1", "_2")
+    )
+    s1["distance"] = np.sqrt(
+        np.sum(
+            np.square(
+                s1[["x_1", "y_1", "z_1"]].values - s1[["x_2", "y_2", "z_2"]].values
+            ),
+            axis=1,
+        )
+    )
+
+    tvalues = s1["frame"].values
+    tvalues = tvalues[:, None] - tvalues
+
+    # list of lags
+    lags = np.arange(len(s1) - min_points) + 1
+
+    final_lags = []
+    tamsd = []
+    # Loop over lags
+    for lag in lags:
+        # find indexes of pairs of timepoints with lag equal to the selected lag
+        x, y = np.where(tvalues == lag)
+
+        if len(x) < min_points:
+            continue
+
+        tmp_tamsd = np.mean(
+            np.square(s1.iloc[x][["distance"]].values - s1.iloc[y][["distance"]].values)
+        )
+
+        final_lags.append(lag)
+        tamsd.append(tmp_tamsd)
+
+    df = pd.DataFrame({"lags": final_lags, "pairwise_tamsd": tamsd})
+    df["cellid"] = s1["cell"].values[0]
+
+    return df
+
+
+def calculate_all_pairwise_tamsd(
+    traj_file: str, min_points: int = 2, min_length: int = 2
+):
+    """Calculate all time average  pairwise MSD given a movie and return a DataFrame containing them.
+
+    Inputs:
+        traj_file: path to the trajectories file.
+        min_points: minimum number of points to consider time average MSD.
+        min_length: minimum length of trajectory accepted.
+
+    Return:
+        results: pd.DataFrame containing all time average pairwise MSD given the trajectories of a movie.
+    """
+
+    # Read data from trajectory file
+    df = pd.read_csv(traj_file)
+
+    # output data frame result holder
+    results = pd.DataFrame()
+
+    tracks = df["track"].unique()
+    # Loop of tracks
+    for i in range(len(tracks)):
+        track_id1 = tracks[i]
+        for j in range(i + 1, len(tracks)):
+            track_id2 = tracks[j]
+            # Extract single trajectory and sort based on time (frame)
+            first_traj = df[df["track"] == track_id1].copy().sort_values(by="frame")
+            second_traj = df[df["track"] == track_id1].copy().sort_values(by="frame")
+            # filter on too short tracks
+            if (
+                len(pd.merge(first_traj, second_traj, how="inner", on=["frame"]))
+                < min_length
+            ):
+                continue
+
+            df_tmp = calculate_pairwise_tamsd(
+                first_traj, second_traj, min_points=min_points
+            )
+            results = pd.concat([results, df_tmp])
+
+    results["traj_file"] = os.path.basename(traj_file)
+
+    return results
+
+
 def filter_track_single_movie(
     filename: str,
     min_length: int = 10,

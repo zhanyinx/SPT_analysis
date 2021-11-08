@@ -69,6 +69,14 @@ def _parse_args():
         action="store_true",
         help="If defined, it will look for uncorrected and residual files as well.",
     )
+    parser.add_argument(
+        "-pw",
+        "--pairwise",
+        type=str,
+        default=False,
+        required=False,
+        help="Calculate MSD based on pairwise distances.",
+    )
     args = parser.parse_args()
     return args
 
@@ -110,12 +118,20 @@ def main():
     trajectory_files = glob.glob(f"{path}/*pure.csv")
 
     # Calculate all tamsd
-    res = client.map(
-        calculate_all_tamsd,
-        trajectory_files,
-        min_points=args.min_points,
-        min_length=args.min_length,
-    )
+    if bool(args.pairwise):
+        res = client.map(
+            calculate_tamsd_pairwise,
+            trajectory_files,
+            min_points=args.min_points,
+            pairwise=args.pairwise,
+        )
+    else:
+        res = client.map(
+            calculate_all_tamsd,
+            trajectory_files,
+            min_points=args.min_points,
+            min_length=args.min_length,
+        )
     results = client.gather(res)
 
     df = pd.concat(results)
@@ -127,7 +143,10 @@ def main():
         r"(20[0-9]*)_[\w\W_]*?([^_]*)_([^_]*)_[\d]*?[perc_]*?([0-9])_[\w\W]*?_([\w]*)\.csvpure",
         expand=True,
     )
-    df.to_csv(args.output, index=False)
+    if bool(args.pairwise):
+        df.to_csv(args.output + "pairwise.csv", index=False)
+    else:
+        df.to_csv(args.output, index=False)
     # Stop parallelization
     client.close()
 

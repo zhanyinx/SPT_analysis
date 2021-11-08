@@ -26,6 +26,7 @@ function help {
     echo "   [-p|--min_points MIN_POINTS] : Minimum number of points to calculate tamsd, default 5."
     echo "   [-t|--tmp TMP] : scratch folder for temporary file, default ./scratch"
     echo "   [-u|--uncorrected_residual]: if defined, it will look for *_uncorrected.csv and *_residual.csv files and output them in the results."
+    echo "   [-w|--pairwise]: if defined - calculate pairwise MSD, otherwise regular MSD (based on single trajectories)."
     echo "   [-h|--help]: help"
     exit;
 }
@@ -43,6 +44,7 @@ for arg in "$@"; do
       "--scriptpath")   set -- "$@" "-s" ;;
       "--tmp")   set -- "$@" "-t" ;;
       "--uncorrected_residual")   set -- "$@" "-u" ;;
+      "--pairwise")   set -- "$@" "-w" ;;
        *)        set -- "$@" "$arg"
   esac
 done
@@ -55,8 +57,8 @@ min_tracks=2
 output="output.csv"
 tmp="./scratch"
 uncorrected_residual=1
-
-while getopts ":i:s:l:m:p:o:t:uh" OPT
+pairwise=1
+while getopts ":i:s:l:m:p:o:t:u:pwh" OPT
 do
     case $OPT in
         i) input=$OPTARG;;
@@ -67,6 +69,7 @@ do
         s) pathSPT=$OPTARG;;
         t) tmp=$OPTARG;;
         u) uncorrected_residual=0;;
+        w) pairwise=0;;
         h) help ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
@@ -99,6 +102,8 @@ fi
 
 if [ $uncorrected_residual -eq 1 ]; then
     python $pathSPT/source/msd_calculation/msd.py -i $input -ml $min_length -mp $min_points -o $output -t $tmp -mt $min_tracks
+else if [ $pairwise -eq 1 ]; then
+    python $pathSPT/source/msd_calculation/msd.py -i $input -ml $min_length -mp $min_points -o $output -t $tmp -mt $min_tracks -pw $pairwise
 else
     python $pathSPT/source/msd_calculation/msd.py -i $input -ml $min_length -mp $min_points -o $output -t $tmp -ur -mt $min_tracks
 fi
