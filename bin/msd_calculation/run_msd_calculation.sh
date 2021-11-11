@@ -102,9 +102,10 @@ fi
 
 if [ $uncorrected_residual -eq 1 ]; then
     python $pathSPT/source/msd_calculation/msd.py -i $input -ml $min_length -mp $min_points -o $output -t $tmp -mt $min_tracks
-else if [ $pairwise -eq 1 ]; then
+elif [ $pairwise -eq 1 ]; then
     python $pathSPT/source/msd_calculation/msd.py -i $input -ml $min_length -mp $min_points -o $output -t $tmp -mt $min_tracks -pw $pairwise
 else
     python $pathSPT/source/msd_calculation/msd.py -i $input -ml $min_length -mp $min_points -o $output -t $tmp -ur -mt $min_tracks
 fi
+
 

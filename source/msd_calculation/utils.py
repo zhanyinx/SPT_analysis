@@ -126,9 +126,14 @@ def calculate_pairwise_tamsd(
         if len(x) < min_points:
             continue
 
-        tmp_tamsd = np.mean(
-            np.square(s1.iloc[x][["distance"]].values - s1.iloc[y][["distance"]].values)
-        )
+        tmp_tamsd = (
+            np.mean(
+                np.square(
+                    s1.iloc[x][["distance"]].values - s1.iloc[y][["distance"]].values
+                )
+            )
+            * 1.5
+        )  # *1.5 to account for the fact that we are using 1 dimension instead of 3 but doubled shifts
 
         final_lags.append(lag)
         tamsd.append(tmp_tamsd)
@@ -167,7 +172,7 @@ def calculate_all_pairwise_tamsd(
             track_id2 = tracks[j]
             # Extract single trajectory and sort based on time (frame)
             first_traj = df[df["track"] == track_id1].copy().sort_values(by="frame")
-            second_traj = df[df["track"] == track_id1].copy().sort_values(by="frame")
+            second_traj = df[df["track"] == track_id2].copy().sort_values(by="frame")
             # filter on too short tracks
             if (
                 len(pd.merge(first_traj, second_traj, how="inner", on=["frame"]))
