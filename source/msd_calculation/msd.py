@@ -72,10 +72,16 @@ def _parse_args():
     parser.add_argument(
         "-pw",
         "--pairwise",
-        type=str,
-        default=False,
-        required=False,
-        help="Calculate MSD based on pairwise distances.",
+        dest="pairwise",
+        action="store_true",
+        help="If defined, calculate MSD based on pairwise radial distances.",
+    )
+    parser.add_argument(
+        "-r",
+        "--radial",
+        dest="radial",
+        action="store_true",
+        help="If defined, calculate MSD based on radial distance. 'distance' column must be present",
     )
     args = parser.parse_args()
     return args
@@ -118,12 +124,13 @@ def main():
     trajectory_files = glob.glob(f"{path}/*pure.csv")
 
     # Calculate all tamsd
-    if bool(args.pairwise):
+    if args.pairwise:
         res = client.map(
-            calculate_tamsd_pairwise,
+            calculate_all_pairwise_tamsd,
             trajectory_files,
             min_points=args.min_points,
-            pairwise=args.pairwise,
+            min_length=args.min_length,
+            radial=True,
         )
     else:
         res = client.map(
@@ -131,6 +138,7 @@ def main():
             trajectory_files,
             min_points=args.min_points,
             min_length=args.min_length,
+            radial=args.radial,
         )
     results = client.gather(res)
 
@@ -143,10 +151,7 @@ def main():
         r"(20[0-9]*)_[\w\W_]*?([^_]*)_([^_]*)_[\d]*?[perc_]*?([0-9])_[\w\W]*?_([\w]*)\.csvpure",
         expand=True,
     )
-    if bool(args.pairwise):
-        df.to_csv(args.output + "pairwise.csv", index=False)
-    else:
-        df.to_csv(args.output, index=False)
+    df.to_csv(args.output, index=False)
     # Stop parallelization
     client.close()
 
