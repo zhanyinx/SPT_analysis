@@ -26,7 +26,8 @@ function help {
     echo "   [-p|--min_points MIN_POINTS] : Minimum number of points to calculate tamsd, default 5."
     echo "   [-t|--tmp TMP] : scratch folder for temporary file, default ./scratch"
     echo "   [-u|--uncorrected_residual]: if defined, it will look for *_uncorrected.csv and *_residual.csv files and output them in the results."
-    echo "   [-w|--pairwise]: if defined - calculate pairwise MSD, otherwise regular MSD (based on single trajectories)."
+    echo "   [-w|--pairwise]: if defined - calculate pairwise radial MSD, otherwise regular MSD (based on single trajectories)."
+    echo "   [-r|--radial]: if defined - calculate radial MSD. distance column must be present."
     echo "   [-h|--help]: help"
     exit;
 }
@@ -41,10 +42,11 @@ for arg in "$@"; do
       "--min_points")   set -- "$@" "-p" ;;
       "--min_tracks")   set -- "$@" "-m" ;;
       "--output")   set -- "$@" "-o" ;;
+      "--pairwise")   set -- "$@" "-w" ;;
+      "--radial")   set -- "$@" "-r" ;;
       "--scriptpath")   set -- "$@" "-s" ;;
       "--tmp")   set -- "$@" "-t" ;;
       "--uncorrected_residual")   set -- "$@" "-u" ;;
-      "--pairwise")   set -- "$@" "-w" ;;
        *)        set -- "$@" "$arg"
   esac
 done
@@ -58,14 +60,17 @@ output="output.csv"
 tmp="./scratch"
 uncorrected_residual=1
 pairwise=1
-while getopts ":i:s:l:m:p:o:t:u:pwh" OPT
+radial=1
+
+while getopts ":i:s:l:m:p:o:t:p:ruwh" OPT
 do
     case $OPT in
         i) input=$OPTARG;;
         l) min_length=$OPTARG;;
-	m) min_tracks=$OPTARG;;
+	    m) min_tracks=$OPTARG;;
         o) output=$OPTARG;;
         p) min_points=$OPTARG;;
+        r) radial=0;;
         s) pathSPT=$OPTARG;;
         t) tmp=$OPTARG;;
         u) uncorrected_residual=0;;
@@ -100,12 +105,19 @@ if ! [ -d $pathSPT ]; then
     exit
 fi
 
-if [ $uncorrected_residual -eq 1 ]; then
-    python $pathSPT/source/msd_calculation/msd.py -i $input -ml $min_length -mp $min_points -o $output -t $tmp -mt $min_tracks
-elif [ $pairwise -eq 1 ]; then
-    python $pathSPT/source/msd_calculation/msd.py -i $input -ml $min_length -mp $min_points -o $output -t $tmp -mt $min_tracks -pw $pairwise
-else
-    python $pathSPT/source/msd_calculation/msd.py -i $input -ml $min_length -mp $min_points -o $output -t $tmp -ur -mt $min_tracks
+extra=""
+if [ $uncorrected_residual -eq 0 ]; then
+    extra=`echo "$extra -ur"`
 fi
 
+if [ $pairwise -eq 0 ]; then
+    extra=`echo "$extra -pw"`
+fi
+
+if [ $radial -eq 0 ]; then
+    extra=`echo "$extra -r"`
+fi
+
+
+python $pathSPT/source/msd_calculation/msd.py -i $input -ml $min_length -mp $min_points -o $output -t $tmp -mt $min_tracks $extra
 
