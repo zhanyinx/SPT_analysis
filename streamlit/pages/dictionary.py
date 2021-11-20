@@ -54,6 +54,7 @@ SYSTEMATIC_ERRORS = {
     "rad21_pairwise": 0.0119,
     "ctcf": 0.0148,
     "sororin_wapl": 0.0148,
+    "sororin_new_202111": 0.0148,
     "rousetime": 0.0025,
     "lauradata": 0.0,
     "twocolor_degron": 0.0,
