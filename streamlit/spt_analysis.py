@@ -15,8 +15,8 @@ if PAGES[selection] == "about":
 if PAGES[selection] == "msd":
     visualize_msd()
 
-if PAGES[selection] == "tables":
-    tables()
+# if PAGES[selection] == "tables":
+#     tables()
 
 if PAGES[selection] == "direction":
     visualize_3point()
