@@ -3,6 +3,7 @@ LIST_SAMPLES_MSD = {
     "rad21": "https://drive.google.com/uc?export=download&id=1jPzZlfdJZj1Y33-q4Ev9_QB9yyLbzaYI",
     "rad21_pairwise": "https://drive.google.com/uc?export=download&id=1S1DW-a6o0Swx-UfzNTYVll_eJi5fMplW",
     "ctcf": "https://drive.google.com/uc?export=download&id=1y_hHx0vc7lN04kXpYpVkJVSlRiinOAex",
+    "sororin_new_202111": "https://drive.google.com/uc?export=download&id=1301gA0rcPVTAj4GfMkKqZctMgqlEsxq8",
     "sororin_wapl": "https://drive.google.com/uc?export=download&id=16kvbu3ege8T-NnFje9yhThbxi04ImAb9",
     "rousetime": "https://drive.google.com/uc?export=download&id=1aMj2c6TkIN3NfKmRzD6-bCjcUz424Mf8",
     "lauradata": "https://drive.google.com/uc?export=download&id=1MAxNdi9zkOlZB-EHNlaZRlXAAEAX_fBT",
@@ -10,7 +11,7 @@ LIST_SAMPLES_MSD = {
     "twocolor_degron_30s": "https://drive.google.com/uc?export=download&id=1Atb_g-5uQnxfOF5RdcglJJqCEGpum_Am",
     "twocolor_degron_60s": "https://drive.google.com/uc?export=download&id=1NkR6GpsfoPkcMzPEjKvMwtRCaFBaQfBf",
     "twocolor_degron_2d_1s": "https://drive.google.com/uc?export=download&id=13w6A8RkDifMbG6lCL_7px-Gp9o9AJ7XU",
-    "twocolor_degron_newlines": "https://drive.google.com/uc?export=download&id=1JB-XdfJPWZy-rxYcdzwJH19RfLqVjZzj",
+    "twocolor_degron_newlines": "https://drive.google.com/uc?export=download&id=1Z0gpCjrLRz1j7zx1CioBjB2ezcyqRxQu",
 }
 
 
@@ -18,21 +19,21 @@ LIST_SAMPLES_PAIRWISE_DISTANCE = {
     "twocolor_degron_pairwise": "https://drive.google.com/uc?export=download&id=1HCo7PWSkQjHi0i8F52A3-0wl5PBrdSn2",
     "twocolor_degron_pairwise_30s": "https://drive.google.com/uc?export=download&id=1NnOJCegnt_Ntkg7kaXoKdZg39KgAksFz",
     "twocolor_degron_pairwise_2d_1s": "https://drive.google.com/uc?export=download&id=18qBEGWNmv10pbWDeJvuW7YKKbiyvcO2X",
-    "twocolor_degron_pairwise_newlines": "https://drive.google.com/uc?export=download&id=1lJI3el1jTY8doorpNvTW6i5dXSynWPgN",
+    "twocolor_degron_pairwise_newlines": "https://drive.google.com/uc?export=download&id=1ydu_Ny7k06wTJmfUEkYXPMRJst94tHhI",
 }
 
 LIST_SAMPLES_DURATION = {
     "twocolor_degron_pairwise": "https://drive.google.com/uc?export=download&id=1P6TtNueC-hCaF3jqPEg6OqJQhaLluZCi",
     "twocolor_degron_pairwise_30s": "https://drive.google.com/uc?export=download&id=1hI3SCcDNldBQBdcqGqeulB09FzdlcDVS",
     "twocolor_degron_pairwise_2d_1s": "https://drive.google.com/uc?export=download&id=1ZNrO_e-f_SqGB-R-Qp16GuUzxc3ah3rz",
-    "twocolor_degron_pairwise_newlines": "https://drive.google.com/uc?export=download&id=1EjRnkk3YUp-i_5sUKtvlnLniWDD21vjq",
+    "twocolor_degron_pairwise_newlines": "https://drive.google.com/uc?export=download&id=1PDbzU_AlrqAlxLCFHtyyJPGPASGrqhOj",
 }
 
 LIST_SAMPLES_SECOND_PASSAGE_TIME = {
     "twocolor_degron_pairwise": "https://drive.google.com/uc?export=download&id=1qwXtLFpX5PcN-20EYz-RP0XjambHMbNr",
     "twocolor_degron_pairwise_30s": "https://drive.google.com/uc?export=download&id=1Avq2hGk_Jmr2McJpSFmNj-cE-jC1Wz3Q",
     "twocolor_degron_pairwise_2d_1s": "https://drive.google.com/uc?export=download&id=1ImKpTc1LsoCxOiL30wXAAOHQja1_V-g1",
-    "twocolor_degron_pairwise_newlines": "https://drive.google.com/uc?export=download&id=1kOu6bzearbI1WdsvYkFBkadRIX_2wQZs",
+    "twocolor_degron_pairwise_newlines": "https://drive.google.com/uc?export=download&id=1qylpW8LVCHxr8MiRJs2OhXvJ29Dxi858",
 }
 
 

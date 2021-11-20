@@ -97,6 +97,9 @@ def pairwise_analysis():
         second_passage_time["induction_time"].isin(induction_time)
     ]
 
+    if st.sidebar.checkbox("Split by date", value=False):
+        data["condition"] = data["date"].astype(str) + data["condition"]
+
     # Plotting
     st.subheader("Distribution of radial distances across all selected movies")
     fig = plt.figure()
