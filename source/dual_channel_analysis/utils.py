@@ -226,7 +226,7 @@ def stitch(df: pd.DataFrame, max_dist: float = 1.6, max_overlaps: float = 0.5):
 def calculate_distance_merged_channels(merged):
     s1 = merged[[x + "_x" for x in [X, Y, Z]]].values
     s2 = merged[[x + "_y" for x in [X, Y, Z]]].values
-    return np.mean(np.sum((s1 - s2) ** 2, axis=1))
+    return np.sqrt(np.mean(np.sum((s1 - s2) ** 2, axis=1)))
 
 
 def calculate_single_dist(sub_df1, sub_df2, cost=True):
@@ -446,7 +446,6 @@ def compute_affine_transformation3d(
 
     references = []
     movings = []
-
     # pool registred points from all bead images
     for reference, moving in zip(reference_files, moving_files):
         reference, moving = register_points_using_euclidean_distance(
@@ -454,7 +453,6 @@ def compute_affine_transformation3d(
             moving_file=moving,
             distance_cutoff=distance_cutoff,
         )
-
         references.append(reference)
         movings.append(moving)
 
