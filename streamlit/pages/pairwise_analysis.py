@@ -6,8 +6,7 @@ import matplotlib.pyplot as plt
 from .utils import *
 from .dictionary import (
     LIST_SAMPLES_PAIRWISE_DISTANCE,
-    LIST_SAMPLES_DURATION,
-    LIST_SAMPLES_SECOND_PASSAGE_TIME,
+    LIST_SAMPLES_MODEL,
 )
 
 
@@ -23,8 +22,7 @@ def pairwise_analysis():
 
     # Samples
     list_samples = LIST_SAMPLES_PAIRWISE_DISTANCE
-    list_durations = LIST_SAMPLES_DURATION
-    list_second_passage_time = LIST_SAMPLES_SECOND_PASSAGE_TIME
+    list_models = LIST_SAMPLES_MODEL
 
     # Take input from user and load file and make a copy
     sample_name = st.sidebar.selectbox(
@@ -37,39 +35,32 @@ def pairwise_analysis():
         sample_link = list_samples[sample_name]
         gdown.download(sample_link, f"{sample_name}.csv.zip")
 
-    if not os.path.isfile(f"{sample_name}_duration.csv.zip"):
-        sample_link = list_durations[sample_name]
-        gdown.download(sample_link, f"{sample_name}_duration.csv.zip")
-
-    if not os.path.isfile(f"{sample_name}_second_passage_time.csv.zip"):
-        sample_link = list_second_passage_time[sample_name]
-        gdown.download(sample_link, f"{sample_name}_second_passage_time.csv.zip")
+    if not os.path.isfile(f"{sample_name}.obj"):
+        sample_link = list_models[sample_name]
+        gdown.download(sample_link, f"{sample_name}.obj")
 
     # load and make a copy of original data
     original_data = load_data(f"{sample_name}.csv.zip")
     data = original_data.copy()
 
-    # load and make a copy of original data
-    original_duration = load_data(f"{sample_name}_duration.csv.zip")
-    duration = original_duration.copy()
-    duration[["cell_line", "induction_time"]] = duration["condition"].str.split(
-        "_", expand=True
-    )
-
-    # load and make a copy of original data
-    original_second_passage_time = load_data(
-        f"{sample_name}_second_passage_time.csv.zip"
-    )
-    second_passage_time = original_second_passage_time.copy()
-    second_passage_time[["cell_line", "induction_time"]] = second_passage_time[
-        "condition"
-    ].str.split("_", expand=True)
+    model = load_model(f"{sample_name}.obj")
 
     # Take input from user for time resultion of acquisition
     interval = float(st.sidebar.text_input("Acquisition time resolution", "10"))
+
+    (
+        original_durations,
+        original_second_passage_times,
+        fraction_time,
+        conditions,
+    ) = calculate_duration_second_passage_time(
+        data=data, resolution=interval, model=model
+    )
+
+    duration = original_durations.copy()
+    second_passage_time = original_second_passage_times.copy()
+
     data["frame"] *= interval
-    duration["contact_duration"] *= interval
-    second_passage_time["second_passage_time"] *= interval
 
     # User input: select cell lines
     clines = list(data["cell_line"].unique())
@@ -148,11 +139,16 @@ def pairwise_analysis():
         ymax = st.number_input("Max y-axis", value=1.5)
     fig = plt.figure()
     sub = data[data["uniqueid"] == options[select]].copy()
+    distance = sub.distance.values.reshape(-1, 1)
+    states = model.predict(distance)
+
     st.text(
         f"Info of selected track:\n Movie: {sub.filename.unique()} \n cellid: {sub.cell.unique()} \n track: {sub.track.unique()}"
     )
 
     plt.errorbar(x=sub["frame"], y=sub["distance"], yerr=sub["sigma_d"])
+    plt.plot(sub["frame"], states)
+
     plt.xlabel("Time (seconds)")
     plt.ylabel("Radial distance (um)")
     plt.title(sub.condition.values[0])
@@ -185,143 +181,16 @@ def pairwise_analysis():
     )
 
     st.subheader("Contact duration and second passage time across ngap, contact radius")
-    fig, ax = plt.subplots(2, 4, figsize=(20, 10))
-    for i in range(4):
-        for j in range(2):
-            cutoff = duration.contact_cutoff.unique()[i + j]
-            duration_cutoff = pd.DataFrame(
-                duration[duration.contact_cutoff == cutoff]
-                .groupby(["condition", "ngap"])
-                .mean()["contact_duration"]
-            )
-            duration_cutoff["condition"], duration_cutoff["ngap"] = zip(
-                *duration_cutoff.index
-            )
+    col1, col2, col3 = st.columns(3)
 
-            sns.lineplot(
-                x="ngap",
-                y="contact_duration",
-                hue="condition",
-                data=duration_cutoff,
-                ax=ax[j, i],
-            )
-            ax[j, i].set_xlabel("ngap allowed")
-            ax[j, i].set_ylabel("Average contact duration")
-            ax[j, i].set_title(f"distance cutoff {cutoff}")
-
-    st.pyplot(fig)
-    plt.show()
-    plt.savefig("plot.pdf")
-
-    # Dowload options
-    st.markdown(
-        download_plot(
-            "plot.pdf",
-            "Download plot",
-        ),
-        unsafe_allow_html=True,
-    )
-
-    fig, ax = plt.subplots(2, 4, figsize=(20, 10))
-    for i in range(4):
-        for j in range(2):
-            cutoff = second_passage_time.contact_cutoff.unique()[i + j]
-            second_passage_time_cutoff = pd.DataFrame(
-                second_passage_time[second_passage_time.contact_cutoff == cutoff]
-                .groupby(["condition", "ngap"])
-                .mean()["second_passage_time"]
-            )
-            (
-                second_passage_time_cutoff["condition"],
-                second_passage_time_cutoff["ngap"],
-            ) = zip(*second_passage_time_cutoff.index)
-
-            sns.lineplot(
-                x="ngap",
-                y="second_passage_time",
-                hue="condition",
-                data=second_passage_time_cutoff,
-                ax=ax[j, i],
-            )
-            ax[j, i].set_xlabel("ngap allowed")
-            ax[j, i].set_ylabel("Average second passage time")
-            ax[j, i].set_title(f"distance cutoff {cutoff}")
-
-    st.pyplot(fig)
-    plt.show()
-    plt.savefig("plot.pdf")
-
-    # Dowload options
-    st.markdown(
-        download_plot(
-            "plot.pdf",
-            "Download plot",
-        ),
-        unsafe_allow_html=True,
-    )
-
-    st.subheader(
-        "Select specific contact cutoff and number of allowed gaps for the all plots that follows"
-    )
-    # User input: cutoff for contact
-    contact_cutoffs = list(duration["contact_cutoff"].unique())
-    list_ngaps = list(duration["ngap"].unique())
-    contact_cutoff = float(
-        st.selectbox("Specific contact cutoff (um)", contact_cutoffs, index=0)
-    )
-
-    ngaps = int(st.selectbox("Specific number of gaps allowed", list_ngaps, index=0))
-
-    duration = duration[
-        (duration["ngap"] == ngaps) & (duration["contact_cutoff"] == contact_cutoff)
-    ]
-    second_passage_time = second_passage_time[
-        (second_passage_time["ngap"] == ngaps)
-        & (second_passage_time["contact_cutoff"] == contact_cutoff)
-    ]
-
-    st.subheader("Contact duration histograms and ecdf")
-    col1, col2 = st.columns(2)
-
-    isfixed = st.checkbox("Check to fix x-axis.", value=True)
-    if isfixed:
-        xmax = st.number_input("Max x-axis", value=500.0)
-
+    # Fraction of time spent in looped state
     fig = plt.figure()
-    legend = []
-    maximum = np.max(duration["contact_duration"])
-    bins = np.arange(0, maximum, interval)
-    for name, sub in duration.groupby("condition"):
-        plt.hist(sub["contact_duration"], alpha=0.5, density=True, bins=bins)
-        legend.append(name)
-
-    if isfixed:
-        plt.xlim(0, xmax)
-    else:
-        plt.xlim(0, maximum)
-    plt.legend(legend)
-    plt.xlabel("Contact duration")
-    plt.ylabel("Density")
-
+    ax = fig.add_subplot(111)
+    ax.bar(conditions, [1 - x for x in fraction_time])
+    ax.set_ylabel("Fraction of time at state looped")
+    ax.set_xticklabels(conditions, rotation=90)
+    plt.ylim(0, 1)
     col1.pyplot(fig)
-    plt.show()
-    plt.savefig("plot.pdf")
-    st.markdown(
-        download_plot(
-            "plot.pdf",
-            "Download right plot",
-        ),
-        unsafe_allow_html=True,
-    )
-
-    fig = plt.figure()
-    ax = sns.ecdfplot(duration, x="contact_duration", hue="condition")
-    plt.xlabel("contact duration (seconds)")
-    plt.ylabel("ECDF")
-    if isfixed:
-        plt.xlim(0, xmax)
-
-    col2.pyplot(fig)
     plt.show()
     plt.savefig("plot.pdf")
     st.markdown(
@@ -332,48 +201,83 @@ def pairwise_analysis():
         unsafe_allow_html=True,
     )
 
-    st.subheader("First passage time histogram and ecdf")
-    col1, col2 = st.columns(2)
-    isfixed = st.checkbox("Check to fix x-axis of first passage time.", value=True)
-    if isfixed:
-        xmax = st.number_input("Max x-axis", value=1500.0)
-
+    # Contact duration
     fig = plt.figure()
-    legend = []
-    maximum = np.max(second_passage_time["second_passage_time"])
-    for name, sub in second_passage_time.groupby("condition"):
-        plt.hist(sub["second_passage_time"], alpha=0.5, density=True)
-        legend.append(name)
-    plt.xlim(0, maximum + 1)
-    plt.legend(legend)
-    plt.xlabel("Second passage time")
-    plt.ylabel("Density")
-    if isfixed:
-        plt.xlim(0, xmax)
-    col1.pyplot(fig)
-    plt.show()
-    plt.savefig("plot.pdf")
-    st.markdown(
-        download_plot(
-            "plot.pdf",
-            "Download right plot",
-        ),
-        unsafe_allow_html=True,
-    )
+    box_plot = sns.boxplot(data=duration, x="condition", y="contact_duration")
 
-    fig = plt.figure()
-    ax = sns.ecdfplot(second_passage_time, x="second_passage_time", hue="condition")
-    plt.xlabel("second passage time (seconds)")
-    plt.ylabel("ECDF")
-    if isfixed:
-        plt.xlim(0, xmax)
+    ax = box_plot.axes
+    lines = ax.get_lines()
+    categories = ax.get_xticks()
+
+    for cat in categories:
+        y = round(lines[4 + cat * 6].get_ydata()[0], 1)
+
+        ax.text(
+            cat,
+            y,
+            f"{y}",
+            ha="center",
+            va="center",
+            fontweight="bold",
+            size=10,
+            color="white",
+            bbox=dict(facecolor="#445A64"),
+        )
+
+    box_plot.figure.tight_layout()
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
     col2.pyplot(fig)
     plt.show()
     plt.savefig("plot.pdf")
     st.markdown(
         download_plot(
             "plot.pdf",
+            "Download middle plot",
+        ),
+        unsafe_allow_html=True,
+    )
+
+    # ecdf = sns.ecdfplot(data=durations, x="contact_duration", hue="condition")
+
+    # second passage time
+    fig = plt.figure()
+    box_plot = sns.boxplot(
+        data=second_passage_time, x="condition", y="second_passage_time"
+    )
+
+    ax = box_plot.axes
+    lines = ax.get_lines()
+    categories = ax.get_xticks()
+
+    for cat in categories:
+        y = round(lines[4 + cat * 6].get_ydata()[0], 1)
+
+        ax.text(
+            cat,
+            y,
+            f"{y}",
+            ha="center",
+            va="center",
+            fontweight="bold",
+            size=10,
+            color="white",
+            bbox=dict(facecolor="#445A64"),
+        )
+
+    box_plot.figure.tight_layout()
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
+
+    col3.pyplot(fig)
+    plt.show()
+    plt.savefig("plot.pdf")
+    st.markdown(
+        download_plot(
+            "plot.pdf",
             "Download right plot",
         ),
         unsafe_allow_html=True,
     )
+
+    # ecdf = sns.ecdfplot(
+    #     data=second_passage_time, x="second_passage_time", hue="condition"
+    # )
