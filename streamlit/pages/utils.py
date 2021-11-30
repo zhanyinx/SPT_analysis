@@ -112,7 +112,7 @@ def download_plot(download_filename: str, download_link_text: str) -> str:
         download_link_text: Text to display for download link.
     """
     file = io.BytesIO()
-    plt.savefig(file, format="pdf")
+    plt.savefig(file, format="pdf", bbox_inches="tight")
     file = base64.b64encode(file.getvalue()).decode("utf-8").replace("\n", "")
 
     return f'<a href="data:application/pdf;base64,{file}" download="{download_filename}">{download_link_text}</a>'
@@ -252,9 +252,29 @@ def contact_duration_second_passage_time_inclusive(
     return duration_df, second_passage_time_df
 
 
+def fill_gaps(df: pd.DataFrame, column: str) -> pd.DataFrame:
+    """Given a dataframe with gaps along the column, fills the gaps with the previous value.
+    Args:
+        df: input data dataframe.
+        column: column name of the variable to assess whether there is gap.
+
+    Return:
+        pd.DataFrame of input data with no gaps."""
+
+    df = df.set_index(column).reindex(np.arange(df[column].min(), df[column].max() + 1))
+    c = df["distance"].isna().sum()
+    df[column] = df.index
+    df = df.ffill()
+
+    return df, c
+
+
 @st.cache
 def calculate_duration_second_passage_time(
-    data: pd.DataFrame, resolution: float, model: hmmlearn.hmm.GaussianHMM
+    data: pd.DataFrame,
+    resolution: float,
+    model: hmmlearn.hmm.GaussianHMM,
+    fraction_nan_max: float = 0.1,
 ):
     """Calculate duration and second passage time of contact and loss of contact.
 
@@ -262,6 +282,7 @@ def calculate_duration_second_passage_time(
         data: dataframe containing the distance between two channels across all matched tracks.
         resolution: time resolution of the data.
         model: hmm model used to calculate the duration and second passage time.
+        fraction_nan_max: maximum fraction of nan allowed in the data.
     """
 
     durations = pd.DataFrame()
@@ -269,6 +290,15 @@ def calculate_duration_second_passage_time(
     fraction_time = []
     conditions = []
 
+    original = pd.DataFrame()
+    length = []
+    for _, sub in data.groupby("uniqueid"):
+        sub, c = fill_gaps(sub, "frame")
+        if c / len(sub) < fraction_nan_max:
+            original = pd.concat([original, sub])
+            length.append(len(sub))
+
+    data = original.copy()
     # inference and calculation of contact duration and second passage time
     for condition, df in data.groupby("condition"):
         av = []
@@ -309,4 +339,4 @@ def calculate_duration_second_passage_time(
         "condition"
     ].str.split("_", expand=True)
 
-    return durations, second_passage_times, fraction_time, conditions
+    return durations, second_passage_times, fraction_time, conditions, data
