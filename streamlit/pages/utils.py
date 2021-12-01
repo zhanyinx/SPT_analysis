@@ -32,10 +32,15 @@ def myround(x):
     return np.around(x, 6)
 
 
-def fit_alpha_d(subset: pd.DataFrame, end1: float, end2: float):
+def fit_alpha_d(
+    subset: pd.DataFrame, end1: float, end2: float, log=False
+) -> pd.DataFrame:
     """Fit the alpha and D under the 3 different regimes separated by end1 and end2 values."""
     subset["loglags"] = np.log10(subset["lags"].values)
-    subset["logtamsd"] = np.log10(subset["tamsd"].values)
+    if not log:
+        subset["logtamsd"] = np.log10(subset["tamsd"].values)
+    else:
+        subset["logtamsd"] = subset["tamsd"].values
 
     subset = subset.dropna()
     r1 = subset[subset["lags"] < end1].copy()

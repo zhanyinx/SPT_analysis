@@ -143,6 +143,7 @@ def visualize_msd():
             pass
 
     # Plot
+
     fig = plt.figure()
     if standard_deviation:
         ax = sns.lineplot(
@@ -151,17 +152,34 @@ def visualize_msd():
             y="tamsd",
             hue="condition",
             err_style="bars",
+            estimator=lambda x: np.power(10, np.mean(np.log10(x))),
             ci="sd",
         )
     else:
         ax = sns.lineplot(
-            data=data, x="lags", y="tamsd", hue="condition", err_style="bars", ci=68
+            data=data,
+            x="lags",
+            y="tamsd",
+            err_style="bars",
+            estimator=lambda x: np.power(10, np.mean(np.log10(x))),
+            hue="condition",
+            ci=68,
         )
+
+    # x_vals = np.array(ax.get_xlim())
+    # x_vals[x_vals < 10] = 10
+    # y_vals = 0.019194 * x_vals ** 0.608944
+    # print(y_vals, x_vals)
+    # ax.plot(x_vals, y_vals, "--")
+
+    # y_vals = 0.012601 * x_vals ** 0.628994
+    # print(y_vals, x_vals)
+    # ax.plot(x_vals, y_vals, "--")
 
     plt.xscale("log")
     plt.yscale("log")
     plt.xlabel(r"$\Delta$t, sec")
-    plt.ylabel(r"EA-tamsd, $\mu$m$^2$)")
+    plt.ylabel(r"EA-tamsd, average of logs ($\mu$m$^2$) ")
     ax.legend(fontsize=5)
 
     if yaxis:
@@ -193,13 +211,17 @@ def visualize_msd():
 
     # Create table of alphas and Ds
     st.subheader("Table of alphas and Ds (errors are SD of estimates)")
-    df_alphas = pd.DataFrame(data.groupby(["lags", "condition"]).mean()["tamsd"])
+    df_alphas = pd.DataFrame(
+        data.groupby(["lags", "condition"])["tamsd"].apply(
+            lambda x: np.mean(np.log10(x))
+        )
+    )
     df_alphas.reset_index(inplace=True)
 
     # Select the upper limit first range of fit
     end1 = float(
         st.number_input(
-            "End of first regime for fitting a and D", value=60.0, step=interval
+            "End of first regime for fitting a and D", value=100.0, step=interval
         )
     )
 
@@ -212,7 +234,7 @@ def visualize_msd():
 
     df = pd.DataFrame()
 
-    if st.checkbox("Use all data instead of average to fit", value=True):
+    if st.checkbox("Use all data instead of average of logs to fit", value=True):
         for condition in data["condition"].unique():
             subset = data[data["condition"] == condition]
             res = fit_alpha_d(subset, end1, end2)
@@ -221,7 +243,7 @@ def visualize_msd():
     else:
         for condition in df_alphas["condition"].unique():
             subset = df_alphas[df_alphas["condition"] == condition]
-            res = fit_alpha_d(subset, end1, end2)
+            res = fit_alpha_d(subset, end1, end2, log=True)
             res["condition"] = condition
             df = pd.concat([df, res])
 
