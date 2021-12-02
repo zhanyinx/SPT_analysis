@@ -146,22 +146,24 @@ def visualize_msd():
 
     fig = plt.figure()
     if standard_deviation:
+        # fig, ax = my_lineplot(df=data)
         ax = sns.lineplot(
             data=data,
             x="lags",
             y="tamsd",
             hue="condition",
             err_style="bars",
-            estimator=lambda x: np.power(10, np.mean(np.log10(x))),
+            estimator=np.mean,  # lambda x: np.power(10, np.mean(np.log10(x))),
             ci="sd",
         )
     else:
+        # fig, ax = my_lineplot(df=data, ste=True)
         ax = sns.lineplot(
             data=data,
             x="lags",
             y="tamsd",
             err_style="bars",
-            estimator=lambda x: np.power(10, np.mean(np.log10(x))),
+            estimator=np.mean,
             hue="condition",
             ci=68,
         )
