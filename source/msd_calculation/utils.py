@@ -4,6 +4,7 @@ import sys
 
 import numpy as np
 import pandas as pd
+import secrets
 
 
 def calculate_single_tamsd(
@@ -96,6 +97,7 @@ def calculate_all_tamsd(
         df_tmp = calculate_single_tamsd(
             single_traj, min_points=min_points, radial=radial
         )
+        df_tmp["uniqueid"] = secrets.token_hex(8)
         results = pd.concat([results, df_tmp])
 
     results["traj_file"] = os.path.basename(traj_file)
@@ -161,6 +163,7 @@ def calculate_all_pairwise_tamsd(
                 df_tmp = calculate_single_tamsd(
                     merged, min_points=min_points, radial=radial
                 )
+                df_tmp["uniqueid"] = secrets.token_hex(8)
                 results = pd.concat([results, df_tmp])
 
     results["traj_file"] = os.path.basename(traj_file)
