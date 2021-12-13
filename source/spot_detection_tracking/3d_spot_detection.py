@@ -180,7 +180,10 @@ def main():
     # Link spots across z stacks
     tracks = []
     for df in dfs:
-        tracks.append(link_3d(df, search_range, gap_frames, min_frames))
+        try:
+            tracks.append(link_3d(df, search_range, gap_frames, min_frames))
+        except:
+            pass
 
     # Non maximum suppression using brightest frame
     df_cleans = []
