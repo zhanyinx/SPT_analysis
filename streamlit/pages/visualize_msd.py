@@ -91,6 +91,7 @@ def visualize_msd():
     elif not avoid_se:
         if "fixed" not in data["induction_time"].unique():
             data["tamsd"] = data["tamsd"] - systematic_error
+            # data = data.drop(data[data.tamsd <= 0].index)
 
     # Options for plot
     pool_clones_replicates = st.checkbox("Pool clones and replicates")
@@ -153,7 +154,7 @@ def visualize_msd():
             y="tamsd",
             hue="condition",
             err_style="bars",
-            estimator=np.mean,  # lambda x: np.power(10, np.mean(np.log10(x))),
+            estimator=lambda x: np.power(10, np.mean(np.log10(x))),
             ci="sd",
         )
     else:
@@ -163,18 +164,19 @@ def visualize_msd():
             x="lags",
             y="tamsd",
             err_style="bars",
-            estimator=np.mean,
+            estimator=lambda x: np.power(10, np.mean(np.log10(x))),
             hue="condition",
             ci=68,
         )
 
     # x_vals = np.array(ax.get_xlim())
     # x_vals[x_vals < 10] = 10
-    # y_vals = 0.019194 * x_vals ** 0.608944
+
+    # y_vals = 0.005051 * x_vals ** 0.720941
     # print(y_vals, x_vals)
     # ax.plot(x_vals, y_vals, "--")
 
-    # y_vals = 0.012601 * x_vals ** 0.628994
+    # y_vals = 0.003787 * x_vals ** 0.694942
     # print(y_vals, x_vals)
     # ax.plot(x_vals, y_vals, "--")
 
