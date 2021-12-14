@@ -6,8 +6,9 @@ LIST_SAMPLES_MSD = {
     "wapl_new_202111": "https://drive.google.com/uc?export=download&id=10LpFBdZrPaK4ACMsql992NQuWBO-mLKP",
     "rousetime": "https://drive.google.com/uc?export=download&id=1aMj2c6TkIN3NfKmRzD6-bCjcUz424Mf8",
     "twocolor_degron_all_lines_10s": "https://drive.google.com/uc?export=download&id=1n-Erm6jCL1GBq3vCsy5u1X_DFJjyot8I",
-    "twocolor_degron_all_lines_10s_absolute_msd": "https://drive.google.com/uc?export=download&id=1g_kXT45eZUGxeak3AsiiI8n0kiD08O6L",
     "twocolor_degron_all_lines_30s": "https://drive.google.com/uc?export=download&id=1cZeim0xL030fjYLKsgPwrWNb4LjNQ33Q",
+    "twocolor_degron_all_lines_10s_absolute_msd": "https://drive.google.com/uc?export=download&id=1g_kXT45eZUGxeak3AsiiI8n0kiD08O6L",
+    "twocolor_degron_all_lines_30s_absolute_msd": "https://drive.google.com/uc?export=download&id=1FmwaxBTLt81s7HnZIqMJUjSRWR6fOaQO",
     "twocolor_degron_twoctcf_2d_1s": "https://drive.google.com/uc?export=download&id=1AbztoKQy2V9kv9I5nnGAafhAVyjpAxNr",
     "twocolor_degron_twoctcf_60s": "https://drive.google.com/uc?export=download&id=1Z7gc7hQEcKXZnGknvg2-A9UI1xmdX6Qz",
 }
@@ -47,6 +48,7 @@ SYSTEMATIC_ERRORS = {
     "rousetime": 0.0025,
     "twocolor_degron_all_lines_10s": 0.0119,
     "twocolor_degron_all_lines_10s_absolute_msd": 0.0148,
+    "twocolor_degron_all_lines_30s_absolute_msd": 0.0148,
     "twocolor_degron_all_lines_30s": 0.0119,
     "twocolor_degron_twoctcf_2d_1s": 0.0119,
     "twocolor_degron_twoctcf_60s": 0.0119,
