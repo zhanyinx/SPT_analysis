@@ -232,7 +232,6 @@ def calculate_distance_merged_channels(merged):
 def calculate_single_dist(sub_df1, sub_df2, cost=True):
     """Distance function for merging tracks. Eucledian distance scaled with sqrt of length.
     If defined, cost for no-overlapping part of tracks is added."""
-    min_len = np.min([len(sub_df1), len(sub_df2)])
     merged = pd.merge(sub_df1, sub_df2, how="inner", on=[FRAME])
     if not len(merged):
         return 9999999999
@@ -311,7 +310,7 @@ def merge_channels(
                 cols = cols[cols != c]
                 remove += 1
 
-        if len(rows) == 0:
+        if len(rows) == 0 or len(cols) == 0:
             break
 
         # extract matched track ids
@@ -329,12 +328,13 @@ def merge_channels(
         for idx1, idx2 in zip(track_list_df1, track_list_df2):
             sub1 = df1[df1[TRACKID] == idx1].copy()
             sub2 = df2[df2[TRACKID] == idx2].copy()
-            tmp = pd.merge(sub1, sub2, on=[FRAME, CELLID], how="inner").sort_values(
-                FRAME
-            )
-            df1, df2 = drop_matched(tmp, df1, df2)
+            tmp = pd.merge(sub1, sub2, on=[FRAME], how="inner").sort_values(FRAME)
+            tmp[CELLID] = tmp["cell_x"].astype(int)
+
             if not len(tmp):
                 continue
+            df1, df2 = drop_matched(tmp, df1, df2)
+
             if calculate_distance_merged_channels(tmp) <= distance_cutoff:
                 tmp["uniqueid"] = secrets.token_hex(16)
                 results = pd.concat([results, tmp])

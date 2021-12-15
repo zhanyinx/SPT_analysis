@@ -1,6 +1,5 @@
 import argparse
 import re
-
 from utils import *
 
 matplotlib.use("Agg")
@@ -23,7 +22,7 @@ def _parse_args():
         "-d",
         "--distance_cutoff",
         type=float,
-        default=1.0,
+        default=1.5,
         required=False,
         help="Maximum distance between trajectories to be considered as matching.",
     )
@@ -31,7 +30,7 @@ def _parse_args():
         "-ml",
         "--min_length",
         type=int,
-        default=10,
+        default=25,
         required=False,
         help="Minimum number of timepoints per trajectory.",
     )
@@ -103,6 +102,13 @@ def _parse_args():
         required=False,
         help="Maximum fraction overlapping allowed for overlapping tracks.",
     )
+    parser.add_argument(
+        "-dd",
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help="If defined, it will print out debug information.",
+    )
 
     args = parser.parse_args()
     return args
@@ -133,16 +139,20 @@ def main():
     if args.output is None:
         outdir = f"{args.input}/pair_wise_distance/"
 
+    if args.debug:
+        outdir_debug = f"{outdir}/debug/"
+        os.makedirs(outdir_debug, exist_ok=True)
+
     if not os.path.exists(outdir):
         os.mkdir(outdir)
 
     # loop over movies
-    for channel1, channel2 in zip(channel1_files, channel2_files):
-        outname = os.path.basename(channel1).replace("w1", "w1.w2")
+    for channel1_name, channel2_name in zip(channel1_files, channel2_files):
+        outname = os.path.basename(channel1_name).replace("w1", "w1.w2")
 
         # read movies
-        channel1 = pd.read_csv(channel1)
-        channel2 = pd.read_csv(channel2)
+        channel1 = pd.read_csv(channel1_name)
+        channel2 = pd.read_csv(channel2_name)
 
         # correct for chromatic aberration
         if args.beads:
@@ -176,6 +186,14 @@ def main():
         channel1 = filter_tracks(channel1, min_length=args.min_length)
         channel2 = filter_tracks(channel2, min_length=args.min_length)
 
+        if args.debug:
+            channel1.to_csv(
+                f"{outdir_debug}/{os.path.basename(channel1_name)}", index=False
+            )
+            channel2.to_csv(
+                f"{outdir_debug}/{os.path.basename(channel2_name)}", index=False
+            )
+
         # assign tracks between channels
         res = merge_channels(
             channel1,
@@ -204,6 +222,21 @@ def main():
                 plt.title(f"Length tracks {len(sub)}; id {idx}")
                 pdf.savefig(fig)
                 plt.close()
+
+        if args.debug:
+            out1 = res[["x_x", "y_x", "z_x", FRAME, "track_x"]]
+            out1.columns = ["x", "y", "z", "frame", "track"]
+            out1.to_csv(
+                f"{outdir_debug}/{os.path.basename(channel1_name)}.merged.csv",
+                index=False,
+            )
+
+            out1 = res[["x_y", "y_y", "z_y", FRAME, "track_y"]]
+            out1.columns = ["x", "y", "z", "frame", "track"]
+            out1.to_csv(
+                f"{outdir_debug}/{os.path.basename(channel2_name)}.merged.csv",
+                index=False,
+            )
 
         # calculate pair-wise distance
         res = calculate_pairwise_distance(res)
