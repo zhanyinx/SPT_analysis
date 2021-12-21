@@ -213,8 +213,8 @@ def print_results(results: pd.DataFrame):
 def calculate_rototranslation_3D(A, B, distance_cutoff=1):
     """Return translation and rotation matrices.
     Args:
-        A: coordinates of fixed set of points.
-        B: coodinates of moving set of points (to which roto translation needs to be applied).
+        A: coodinates of moving set of points (to which roto translation needs to be applied).
+        B: coordinates of fixed set of points.
 
     Return:
         R, t: rotation and translation matrix
