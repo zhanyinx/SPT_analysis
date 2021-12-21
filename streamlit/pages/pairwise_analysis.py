@@ -115,7 +115,9 @@ def pairwise_analysis():
         if custombins:
             plt.hist((sub["distance"]), density=True, alpha=0.5, bins=bins)
         else:
-            plt.hist((sub["distance"]), density=True, alpha=0.5)
+            plt.hist(
+                (sub["distance"]), density=True, alpha=0.5, bins=np.arange(0, 10, 0.01)
+            )
         legend.append(name)
     if st.checkbox("Manually set y axis"):
         ymax = float(st.text_input("y-axis max", "0.25"))
@@ -125,6 +127,7 @@ def pairwise_analysis():
     plt.legend(legend)
     plt.xlabel("Distances (um)")
     plt.ylabel("Density")
+    plt.xlim(0, 2)
     col1.pyplot(fig)
     plt.show()
     plt.savefig("histogram.pdf")
