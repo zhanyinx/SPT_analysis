@@ -17,12 +17,14 @@ LIST_SAMPLES_MSD = {
 LIST_SAMPLES_PAIRWISE_DISTANCE = {
     "twocolor_degron_pairwise_10s": "https://drive.google.com/uc?export=download&id=1BYeKZI7EXPb5-MtXbbXDFNFokG67rfo0",
     "twocolor_degron_pairwise_30s": "https://drive.google.com/uc?export=download&id=1tjHDJweLTcRKbKBBtvHMHFZUokGkFrC1",
+    "twocolor_degron_pairwise_10s_resampled_30s": "https://drive.google.com/uc?export=download&id=1pVYudmnLykSq1BDAnX_9rKjw-2_bVgJs",
     # "twocolor_degron_pairwise_2d_1s": "https://drive.google.com/uc?export=download&id=18qBEGWNmv10pbWDeJvuW7YKKbiyvcO2X",
 }
 
 LIST_SAMPLES_MODEL = {
     "twocolor_degron_pairwise_10s": "https://drive.google.com/uc?export=download&id=18f5yQTlRzfik_Dd0naacQvy6O5RwTzMa",
     "twocolor_degron_pairwise_30s": "https://drive.google.com/uc?export=download&id=19EEBMxXhfffpmnmR6XILg838h4RVLm41",
+    "twocolor_degron_pairwise_10s_resampled_30s": "https://drive.google.com/uc?export=download&id=18f5yQTlRzfik_Dd0naacQvy6O5RwTzMa",
     # "twocolor_degron_pairwise_2d_1s": "https://drive.google.com/uc?export=download&id=1ZNrO_e-f_SqGB-R-Qp16GuUzxc3ah3rz",
 }
 
