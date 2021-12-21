@@ -102,6 +102,8 @@ def pairwise_analysis():
     if st.sidebar.checkbox("Split by date", value=False):
         data["condition"] = data["date"].astype(str) + data["condition"]
 
+    hue_order = sorted(data["condition"].unique())
+
     # Plotting
     st.subheader("Distribution of radial distances across all selected movies")
     col1, col2 = st.columns(2)
@@ -142,9 +144,10 @@ def pairwise_analysis():
     )
 
     fig = plt.figure()
-    ax = sns.ecdfplot(data, x="distance", hue="condition")
+    ax = sns.ecdfplot(data, x="distance", hue="condition", hue_order=hue_order)
     plt.xlabel("Radial distance (um)")
     plt.ylabel("ECDF")
+    plt.xlim(0, 2)
     col2.pyplot(fig)
     plt.show()
     plt.savefig("ecdf.pdf")
@@ -235,7 +238,9 @@ def pairwise_analysis():
 
     # Contact duration
     fig = plt.figure()
-    box_plot = sns.boxplot(data=duration, x="condition", y="contact_duration")
+    box_plot = sns.boxplot(
+        data=duration, x="condition", y="contact_duration", hue_order=hue_order
+    )
 
     ax = box_plot.axes
     lines = ax.get_lines()
@@ -274,7 +279,10 @@ def pairwise_analysis():
     # second passage time
     fig = plt.figure()
     box_plot = sns.boxplot(
-        data=second_passage_time, x="condition", y="second_passage_time"
+        data=second_passage_time,
+        x="condition",
+        y="second_passage_time",
+        hue_order=hue_order,
     )
 
     ax = box_plot.axes
