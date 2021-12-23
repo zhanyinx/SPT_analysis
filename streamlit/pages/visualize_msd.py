@@ -40,7 +40,7 @@ def visualize_msd():
         st.sidebar.slider(
             "Until where you trust the data (in second)?",
             min_value=0.0,
-            max_value=2000.0,
+            max_value=3000.0,
             value=500.0,
             step=interval,
         )
@@ -77,21 +77,6 @@ def visualize_msd():
 
     # Select type of systematic error correction correction to perform
     avoid_se = st.sidebar.checkbox("Avoid systematic error correction")
-    sample_specific_se_correction = st.sidebar.checkbox(
-        "Sample specific systematic error correction"
-    )
-
-    if sample_specific_se_correction:
-        if "fixed" not in data["induction_time"].unique():
-            raise ValueError(
-                "Fixed data must be present to calculate sample specific Error!"
-            )
-        data = sample_specific_systematic_error(data)
-
-    elif not avoid_se:
-        if "fixed" not in data["induction_time"].unique():
-            data["tamsd"] = data["tamsd"] - systematic_error
-            # data = data.drop(data[data.tamsd <= 0].index)
 
     # Options for plot
     pool_clones_replicates = st.checkbox("Pool clones and replicates")
@@ -146,37 +131,59 @@ def visualize_msd():
     # Plot
 
     fig = plt.figure()
-    if standard_deviation:
-        # fig, ax = my_lineplot(df=data)
-        ax = sns.lineplot(
-            data=data,
-            x="lags",
-            y="tamsd",
-            hue="condition",
-            err_style="bars",
-            estimator=lambda x: np.power(10, np.mean(np.log10(x))),
-            ci="sd",
-        )
+    if avoid_se:
+        if standard_deviation:
+            # fig, ax = my_lineplot(df=data)
+            ax = sns.lineplot(
+                data=data,
+                x="lags",
+                y="tamsd",
+                hue="condition",
+                err_style="bars",
+                estimator=lambda x: np.power(10, np.mean(np.log10(x))),
+                ci="sd",
+            )
+        else:
+            # fig, ax = my_lineplot(df=data, ste=True)
+            ax = sns.lineplot(
+                data=data,
+                x="lags",
+                y="tamsd",
+                err_style="bars",
+                estimator=lambda x: np.power(10, np.mean(np.log10(x))),
+                hue="condition",
+                ci=68,
+            )
     else:
-        # fig, ax = my_lineplot(df=data, ste=True)
-        ax = sns.lineplot(
-            data=data,
-            x="lags",
-            y="tamsd",
-            err_style="bars",
-            estimator=lambda x: np.power(10, np.mean(np.log10(x))),
-            hue="condition",
-            ci=68,
-        )
+        if standard_deviation:
+            ax = sns.lineplot(
+                data=data,
+                x="lags",
+                y="tamsd",
+                hue="condition",
+                err_style="bars",
+                estimator=lambda x: np.power(10, np.mean(np.log10(x)))
+                - systematic_error,
+                ci="sd",
+            )
+        else:
+            ax = sns.lineplot(
+                data=data,
+                x="lags",
+                y="tamsd",
+                err_style="bars",
+                estimator=lambda x: np.power(10, np.mean(np.log10(x)))
+                - systematic_error,
+                hue="condition",
+                ci=68,
+            )
+    x_vals = np.array(ax.get_xlim())
+    x_vals[x_vals < 30] = 30
 
-    # x_vals = np.array(ax.get_xlim())
-    # x_vals[x_vals < 10] = 10
-
-    # y_vals = 0.005051 * x_vals ** 0.720941
+    # y_vals = 0.006325 * x_vals ** 0.129346
     # print(y_vals, x_vals)
     # ax.plot(x_vals, y_vals, "--")
-
-    # y_vals = 0.003787 * x_vals ** 0.694942
+    # y_vals = 0.013856 * x_vals ** 0.169984
     # print(y_vals, x_vals)
     # ax.plot(x_vals, y_vals, "--")
 
@@ -215,11 +222,20 @@ def visualize_msd():
 
     # Create table of alphas and Ds
     st.subheader("Table of alphas and Ds (errors are SD of estimates)")
-    df_alphas = pd.DataFrame(
-        data.groupby(["lags", "condition"])["tamsd"].apply(
-            lambda x: np.mean(np.log10(x))
+    if avoid_se:
+        df_alphas = pd.DataFrame(
+            data.groupby(["lags", "condition"])["tamsd"].apply(
+                lambda x: np.mean(np.log10(x))
+            )
         )
-    )
+    else:
+        df_alphas = pd.DataFrame(
+            data.groupby(["lags", "condition"])["tamsd"].apply(
+                lambda x: np.log10(
+                    np.power(10, np.mean(np.log10(x))) - systematic_error
+                )
+            )
+        )
     df_alphas.reset_index(inplace=True)
 
     # Select the upper limit first range of fit
@@ -238,18 +254,11 @@ def visualize_msd():
 
     df = pd.DataFrame()
 
-    if st.checkbox("Use all data instead of average of logs to fit", value=True):
-        for condition in data["condition"].unique():
-            subset = data[data["condition"] == condition]
-            res = fit_alpha_d(subset, end1, end2)
-            res["condition"] = condition
-            df = pd.concat([df, res])
-    else:
-        for condition in df_alphas["condition"].unique():
-            subset = df_alphas[df_alphas["condition"] == condition]
-            res = fit_alpha_d(subset, end1, end2, log=True)
-            res["condition"] = condition
-            df = pd.concat([df, res])
+    for condition in df_alphas["condition"].unique():
+        subset = df_alphas[df_alphas["condition"] == condition]
+        res = fit_alpha_d(subset, end1, end2, log=True)
+        res["condition"] = condition
+        df = pd.concat([df, res])
 
     # Display and download link of table
     st.dataframe(df)
