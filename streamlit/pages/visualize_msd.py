@@ -177,8 +177,8 @@ def visualize_msd():
                 hue="condition",
                 ci=68,
             )
-    x_vals = np.array(ax.get_xlim())
-    x_vals[x_vals < 30] = 30
+    # x_vals = np.array(ax.get_xlim())
+    # x_vals[x_vals < 30] = 30
 
     # y_vals = 0.006325 * x_vals ** 0.129346
     # print(y_vals, x_vals)
