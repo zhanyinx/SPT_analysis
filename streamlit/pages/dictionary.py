@@ -15,8 +15,8 @@ LIST_SAMPLES_MSD = {
 
 
 LIST_SAMPLES_PAIRWISE_DISTANCE = {
-    "twocolor_degron_pairwise_10s": "https://drive.google.com/uc?export=download&id=1BYeKZI7EXPb5-MtXbbXDFNFokG67rfo0",
     "twocolor_degron_pairwise_30s": "https://drive.google.com/uc?export=download&id=1tjHDJweLTcRKbKBBtvHMHFZUokGkFrC1",
+    "twocolor_degron_pairwise_10s": "https://drive.google.com/uc?export=download&id=1BYeKZI7EXPb5-MtXbbXDFNFokG67rfo0",
     "twocolor_degron_pairwise_10s_resampled_30s": "https://drive.google.com/uc?export=download&id=1pVYudmnLykSq1BDAnX_9rKjw-2_bVgJs",
     # "twocolor_degron_pairwise_2d_1s": "https://drive.google.com/uc?export=download&id=18qBEGWNmv10pbWDeJvuW7YKKbiyvcO2X",
 }
