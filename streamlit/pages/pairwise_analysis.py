@@ -46,11 +46,18 @@ def pairwise_analysis():
     model = load_model(f"{sample_name}.obj")
 
     # Take input from user for time resultion of acquisition
-    interval = float(st.sidebar.text_input("Acquisition time resolution", "10"))
+    interval = float(st.sidebar.text_input("Acquisition time resolution", "30"))
     max_nan_allowed = float(
         st.sidebar.text_input(
             "Maximum fraction of gaps for contact duration and second passage time calculation",
             "0.2",
+        )
+    )
+
+    rolling_window = int(
+        st.sidebar.text_input(
+            "Rolling window for contact duration and second passage time calculation",
+            "0",
         )
     )
 
@@ -61,7 +68,11 @@ def pairwise_analysis():
         conditions,
         data_filtered_original,
     ) = calculate_duration_second_passage_time(
-        data=data, resolution=interval, model=model, fraction_nan_max=max_nan_allowed
+        data=data,
+        resolution=interval,
+        model=model,
+        fraction_nan_max=max_nan_allowed,
+        rolling_window=rolling_window,
     )
 
     duration = original_durations.copy()
@@ -175,6 +186,7 @@ def pairwise_analysis():
     sub = data_filtered[data_filtered["uniqueid"] == options[select]].copy()
     distance = sub.distance.values.reshape(-1, 1)
     states = model.predict(distance)
+    states = states / 2
 
     st.text(
         f"Info of selected track:\n Movie: {sub.filename.unique()} \n cellid: {sub.cell.unique()} \n track: {sub.track.unique()}"
@@ -222,6 +234,7 @@ def pairwise_analysis():
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.bar(conditions, [1 - x for x in fraction_time])
+    print(conditions, [1 - x for x in fraction_time])
     ax.set_ylabel("Fraction of time at state looped")
     ax.set_xticklabels(conditions, rotation=90)
     plt.ylim(0, 1)

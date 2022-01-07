@@ -280,6 +280,7 @@ def calculate_duration_second_passage_time(
     resolution: float,
     model: hmmlearn.hmm.GaussianHMM,
     fraction_nan_max: float = 0.1,
+    rolling_window: int = 10,
 ):
     """Calculate duration and second passage time of contact and loss of contact.
 
@@ -288,6 +289,7 @@ def calculate_duration_second_passage_time(
         resolution: time resolution of the data.
         model: hmm model used to calculate the duration and second passage time.
         fraction_nan_max: maximum fraction of nan allowed in the data.
+        rolling_window: size of the rolling window used to calculate the duration and second passage time.
     """
 
     durations = pd.DataFrame()
@@ -300,6 +302,9 @@ def calculate_duration_second_passage_time(
     for _, sub in data.groupby("uniqueid"):
         sub, c = fill_gaps(sub, "frame")
         if c / len(sub) < fraction_nan_max:
+            if rolling_window > 1:
+                sub.distance = sub.distance.rolling(rolling_window, center=True).mean()
+                sub.dropna(inplace=True)
             original = pd.concat([original, sub])
             length.append(len(sub))
 
@@ -310,6 +315,7 @@ def calculate_duration_second_passage_time(
         for uniqueid, sub in df.groupby("uniqueid"):
             distance = sub.distance.values.reshape(-1, 1)
             states = (model.predict(distance))[2:]  # remove starting condition
+            states[states > 1] = 1
             time = sub.frame.values[2:]  # remove starting condition
             df_tmp = pd.DataFrame({"state": states, "frame": time})
             df_tmp["uniqueid"] = uniqueid
