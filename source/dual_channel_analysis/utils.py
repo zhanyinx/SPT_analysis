@@ -6,10 +6,12 @@ from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 import os
 import pandas as pd
+import pickle
 from pymicro.view.vol_utils import compute_affine_transform
 import scipy
 import scipy.optimize
 import secrets
+
 
 matplotlib.use("Agg")
 TRACKID = "track"
@@ -302,7 +304,10 @@ def merge_channels(
         dist = dist.squeeze(axis=0)
 
         # match tracks
-        rows, cols = scipy.optimize.linear_sum_assignment(dist)
+        try:
+            rows, cols = scipy.optimize.linear_sum_assignment(dist)
+        except:
+            break
         remove = 0
         for r, c in zip(rows, cols):
             if dist[r, c] > distance_cutoff:
@@ -416,15 +421,66 @@ def chrom_aberration_quality(original1, original2, original2_corrected, outfile)
     return sigma
 
 
-def compute_affine_transformation3d(
+def calculate_rototranslation_3D(reference, moving, distance_cutoff=1):
+    """Return translation and rotation matrices.
+    Args:
+        reference: coordinates of fixed set of points.
+        moving: coodinates of moving set of points (to which roto translation needs to be applied).
+
+    Return:
+        R, t: rotation and translation matrix
+    """
+
+    A = np.transpose(moving)
+    B = np.transpose(reference)
+
+    num_rows, num_cols = A.shape
+
+    if num_rows != 3:
+        raise Exception(f"matrix A is not 3xN, it is {num_rows}x{num_cols}")
+
+    num_rows, num_cols = B.shape
+    if num_rows != 3:
+        raise Exception(f"matrix B is not 3xN, it is {num_rows}x{num_cols}")
+
+    # find mean column wise
+    centroid_A = np.mean(A, axis=1)
+    centroid_B = np.mean(B, axis=1)
+
+    # ensure centroids are 3x1
+    centroid_A = centroid_A.reshape(-1, 1)
+    centroid_B = centroid_B.reshape(-1, 1)
+
+    # subtract mean
+    Am = A - centroid_A
+    Bm = B - centroid_B
+
+    H = Am @ np.transpose(Bm)
+
+    # find rotation
+    U, S, Vt = np.linalg.svd(H)
+    R = Vt.T @ U.T
+
+    # special reflection case
+    if np.linalg.det(R) < 0:
+        Vt[2, :] *= -1
+        R = Vt.T @ U.T
+
+    t = -R @ centroid_A + centroid_B
+
+    return R, t
+
+
+def compute_transformation3d(
     reference_files: list,
     moving_files: list,
     quality: str,
     channel_to_correct: int = 2,
     distance_cutoff: float = 0.1,
     twod: bool = False,
+    affine: bool = False,
 ):
-    """Find affine transformation to go from spots within moving files to reference files.
+    """Find transformation (default roto-translation) to go from spots within moving files to reference files.
 
     Return A, t so that reference ~= np.transpose(np.dot(A, moving.T)) + t.
     In addition returns the error on x,y,z from bead images.
@@ -435,7 +491,8 @@ def compute_affine_transformation3d(
         quality: Filename where to save quality of chromatic aberration correction on bead images.
         channel_to_correct: channel of moving channel, default channel 2.
         distance_cutoff: max distance for matching spots between reference and moving.
-        twod: if true, will perform 2d correction along xy.
+        twod: if true, will perform 2d correction along xy. IN THIS CASE, AFFINE TRASFORMATION IS CALCULATED.
+        affine: if true, will perform affine transformation.
 
     Return:
         A (3x3): Affine transformation matrix.
@@ -470,15 +527,18 @@ def compute_affine_transformation3d(
         newcoords = np.c_[newcoords, movings[..., 2]]
 
     if not twod:
-        t, A = compute_affine_transform(references, movings)
-        newcoords = np.transpose(np.dot(A, movings.T)) + t
+        if affine:
+            t, A = compute_affine_transform(references, movings)
+            newcoords = np.transpose(np.dot(A, movings.T)) + t
+        else:
+            A, t = calculate_rototranslation_3D(references, movings)
+            newcoords = np.transpose(np.dot(A, movings.T) + t)
     sx, sy, sz = chrom_aberration_quality(
         original1=references,
         original2=movings,
         original2_corrected=newcoords,
         outfile=quality,
     )
-
     return A, t, sx, sy, sz
 
 
@@ -489,6 +549,7 @@ def chromatic_aberration_correction(
     channel_to_correct: int = 2,
     distance_cutoff: float = 0.1,
     twod: bool = False,
+    affine: bool = False,
 ) -> np.ndarray:
     """Perform chromatic aberration correction and return corrected DataFrame.
 
@@ -498,7 +559,8 @@ def chromatic_aberration_correction(
         quality: Filename where to save quality of chromatic aberration correction on bead images.
         channel_to_correct: channel to correct, default channel 2.
         distance_cutoff: max distance for matching spots between reference and moving.
-        twod: if true, will perform 2d correction along xy.
+        twod: if true, will perform 2d correction along xy. IN THIS CASE, AFFINE TRASFORMATION IS CALCULATED.
+        affine: if true, will perform affine transformation.
 
     Return:
         Corrected coordinates and errors on x,y,z calculated from bead images.
@@ -521,17 +583,27 @@ def chromatic_aberration_correction(
             f"Choose either channel 1 or channel 2 to be corrected! Provided channel {channel_to_correct}"
         )
 
-    A, t, sx, sy, sz = compute_affine_transformation3d(
+    A, t, sx, sy, sz = compute_transformation3d(
         reference_files=reference_files,
         moving_files=moving_files,
         channel_to_correct=channel_to_correct,
         distance_cutoff=distance_cutoff,
         quality=quality,
         twod=twod,
+        affine=affine,
     )
 
+    outdir = os.path.dirname(quality)
+    with open(f"{outdir}/rotation.pickle", "wb") as f:
+        pickle.dump(A, f)
+    with open(f"{outdir}/translation.pickle", "wb") as f:
+        pickle.dump(t, f)
+
     if not twod:
-        newcoords = np.transpose(np.dot(A, coords.T)) + t
+        if affine:
+            newcoords = np.transpose(np.dot(A, coords.T)) + t
+        else:
+            newcoords = np.transpose(np.dot(A, coords.T) + t)
     if twod:
         newcoords = np.transpose(np.dot(A, coords[..., :2].T)) + t
         newcoords = np.c_[newcoords, coords[..., 2]]
