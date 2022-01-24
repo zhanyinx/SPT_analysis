@@ -1,5 +1,9 @@
+from hmmlearn import hmm
+import hmmlearn
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 
 
 def fill_gaps(df: pd.DataFrame, column: str) -> pd.DataFrame:
@@ -135,3 +139,143 @@ def contact_duration_second_passage_time_inclusive(
     duration_df = duration_df.reset_index()
     second_passage_time_df = second_passage_time_df.reset_index()
     return duration_df, second_passage_time_df
+
+
+def fill_gaps(df: pd.DataFrame, column: str) -> pd.DataFrame:
+    """Given a dataframe with gaps along the column, fills the gaps with the previous value.
+    Args:
+        df: input data dataframe.
+        column: column name of the variable to assess whether there is gap.
+
+    Return:
+        pd.DataFrame of input data with no gaps."""
+
+    df = df.set_index(column).reindex(np.arange(df[column].min(), df[column].max() + 1))
+    c = df["distance"].isna().sum()
+    df[column] = df.index
+    df = df.ffill()
+
+    return df, c
+
+
+def calculate_duration_second_passage_time(
+    data: pd.DataFrame,
+    resolution: float,
+    model: hmmlearn.hmm.GaussianHMM,
+    fraction_nan_max: float = 0.1,
+    gt: bool = False,
+    full: bool = True,
+):
+    """Calculate duration and second passage time of contact and loss of contact.
+
+    Args:
+        data: dataframe containing the distance between two channels across all matched tracks.
+        resolution: time resolution of the data.
+        model: hmm model used to calculate the duration and second passage time.
+        fraction_nan_max: maximum fraction of nan allowed in the data.
+        gt: if true, it returns the ground truth duration and second passage time.
+        full: if true, it returns also the boundary affected duration and second passage time
+    """
+
+    durations = pd.DataFrame()
+    second_passage_times = pd.DataFrame()
+    fraction_time = []
+    conditions = []
+
+    original = pd.DataFrame()
+    length = []
+    for _, sub in data.groupby("uniqueid"):
+        sub, c = fill_gaps(sub, "frame")
+        if c / len(sub) < fraction_nan_max:
+            original = pd.concat([original, sub])
+            length.append(len(sub))
+
+    data = original.copy()
+    data["prediction"] = -1
+    # inference and calculation of contact duration and second passage time
+    for condition, df in data.groupby("condition"):
+        av = []
+        for uniqueid, sub in df.groupby("uniqueid"):
+            distance = sub.distance.values.reshape(-1, 1)
+            if not gt:
+                states = model.predict(distance)
+                states[states > 1] = 1
+                data.loc[
+                    (data["condition"] == condition) & (data["uniqueid"] == uniqueid),
+                    "prediction",
+                ] = states
+                states = states[2:]  # remove starting condition
+            else:
+                states = sub.bond[2:]
+            time = sub.frame.values[2:]  # remove starting condition
+            df_tmp = pd.DataFrame({"state": states, "frame": time})
+            df_tmp["uniqueid"] = uniqueid
+            df_tmp["condition"] = condition
+
+            av.append(df_tmp.state)
+
+            (
+                duration,
+                second_passage_time,
+            ) = contact_duration_second_passage_time_inclusive(
+                df=df_tmp,
+                resolution=resolution,
+                contact_cutoff=0.5,
+                distance="state",
+                full=full,
+            )
+
+            durations = pd.concat([durations, duration])
+            second_passage_times = pd.concat(
+                [second_passage_times, second_passage_time]
+            )
+
+        fraction_time.append(np.mean(np.concatenate(av)))
+        conditions.append(condition)
+    durations[["cell_line", "induction_time"]] = durations["condition"].str.split(
+        "_", expand=True
+    )
+
+    second_passage_times[["cell_line", "induction_time"]] = second_passage_times[
+        "condition"
+    ].str.split("_", expand=True)
+
+    return durations, second_passage_times, fraction_time, conditions, data
+
+
+def plot(df, x, y, title):
+    fig = plt.figure()
+    box_plot = sns.boxplot(data=df, x=x, y=y)
+
+    ax = box_plot.axes
+    lines = ax.get_lines()
+    categories = ax.get_xticks()
+
+    for cat in categories:
+        y = round(lines[4 + cat * 6].get_ydata()[0], 1)
+
+        ax.text(
+            cat,
+            y,
+            f"{y}",
+            ha="center",
+            va="center",
+            fontweight="bold",
+            size=10,
+            color="white",
+            bbox=dict(facecolor="#445A64"),
+        )
+
+    box_plot.figure.tight_layout()
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
+    plt.title(title)
+    plt.show()
+
+
+def reorder_hmm_model_parameters(model):
+    newmodel = model
+    ordering = np.argsort(model.means_.squeeze())
+    newmodel.means_ = model.means_[ordering]
+    newmodel.covars_ = model.covars_[ordering]
+    newmodel.transmat_ = model.transmat_[ordering, :][:, ordering]
+    return newmodel
