@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-
+import scipy.stats
 
 def fill_gaps(df: pd.DataFrame, column: str) -> pd.DataFrame:
     """Given a dataframe with gaps along the column, fills the gaps with the previous value.
@@ -58,7 +58,7 @@ def contact_duration_second_passage_time_inclusive(
     split: str = "condition",
     full: bool = False,
 ):
-    """Return DataFrame of contact duration and second passage time across all matched tracks within the provided DataFrame.
+    """Return DataFrame of contact duration and second passage time and contact frequency across all matched tracks within the provided DataFrame.
     All values, including those overlapping with gaps in tracking/stitching will be included.
 
     Args:
@@ -71,31 +71,15 @@ def contact_duration_second_passage_time_inclusive(
     """
     duration_df = pd.DataFrame()
     second_passage_time_df = pd.DataFrame()
+    frequency_df = pd.DataFrame()
+
     for condition, subgroup in df.groupby(split):
         duration = []
         second_passage_time = []
+        frequency = []
         for _, sub in subgroup.groupby(trackid):
             # calculate length, start position and type of a vector elements
             length, position, types = rle(sub[distance] < contact_cutoff, full=full)
-            # calculate the start index of True (contact)
-            if len(length) == 1 and types[0] == True and full:
-                duration_tmp = np.max(sub.frame) - np.min(sub.frame)
-            else:
-                start = position[np.where(types == True)]
-                start[start > len(sub) - 1] = len(sub) - 1
-
-                # calculate the end index of True (contact)
-                end = np.array(
-                    [x + y for x, y in zip(start, length[np.where(types == True)])]
-                )
-                end[end > len(sub) - 1] = len(sub) - 1
-
-                # calculate the duration of contact
-
-                duration_tmp = (
-                    sub.iloc[end]["frame"].values - sub.iloc[start]["frame"].values
-                )
-            duration.append(duration_tmp)
 
             # calculate the start index of loss of contact (False)
             if len(length) == 1 and types[0] == False and full:
@@ -116,6 +100,37 @@ def contact_duration_second_passage_time_inclusive(
                 )
             second_passage_time.append(second_passage_time_tmp)
 
+            # calculate the start index of True (contact)
+            if len(length) == 1 and types[0] == True and full:
+                duration_tmp = np.max(sub.frame) - np.min(sub.frame)
+            else:
+                start = position[np.where(types == True)]
+                start[start > len(sub) - 1] = len(sub) - 1
+
+                # calculate the end index of True (contact)
+                end = np.array(
+                    [x + y for x, y in zip(start, length[np.where(types == True)])]
+                )
+                end[end > len(sub) - 1] = len(sub) - 1
+
+                # calculate the duration of contact
+                duration_tmp = (
+                    sub.iloc[end]["frame"].values - sub.iloc[start]["frame"].values
+                )
+
+            if len(length) == 1:
+                frequency_tmp = np.max(sub.frame) - np.min(sub.frame)
+            else:
+                start = position[np.where(types == True)]
+                start[start > len(sub) - 1] = len(sub) - 1
+                frequency_tmp = (
+                    sub.iloc[start[1:]]["frame"].values
+                    - sub.iloc[start[:-1]]["frame"].values
+                )
+
+            duration.append(duration_tmp)
+            frequency.append(frequency_tmp)
+
         try:
             tmp = pd.DataFrame(np.concatenate(duration), columns=["contact_duration"])
         except:
@@ -123,6 +138,15 @@ def contact_duration_second_passage_time_inclusive(
 
         tmp[split] = condition
         duration_df = pd.concat([duration_df, tmp])
+
+        try:
+            tmp = pd.DataFrame(np.concatenate(frequency), columns=["frequency"])
+        except:
+            tmp = pd.DataFrame({"frequency": frequency[0]}, index=[0])
+
+        tmp[split] = condition
+        frequency_df = pd.concat([frequency_df, tmp])
+
         try:
             tmp = pd.DataFrame(
                 np.concatenate(second_passage_time), columns=["second_passage_time"]
@@ -136,9 +160,13 @@ def contact_duration_second_passage_time_inclusive(
 
     duration_df["contact_duration"] *= resolution
     second_passage_time_df["second_passage_time"] *= resolution
+    frequency_df["frequency"] *= resolution
+    frequency_df["frequency"] = frequency_df["frequency"]
+
     duration_df = duration_df.reset_index()
     second_passage_time_df = second_passage_time_df.reset_index()
-    return duration_df, second_passage_time_df
+    frequency_df = frequency_df.reset_index()
+    return duration_df, second_passage_time_df, frequency_df
 
 
 def fill_gaps(df: pd.DataFrame, column: str) -> pd.DataFrame:
@@ -179,16 +207,20 @@ def calculate_duration_second_passage_time(
 
     durations = pd.DataFrame()
     second_passage_times = pd.DataFrame()
+    frequencies = pd.DataFrame()
     fraction_time = []
     conditions = []
 
     original = pd.DataFrame()
     length = []
-    for _, sub in data.groupby("uniqueid"):
-        sub, c = fill_gaps(sub, "frame")
-        if c / len(sub) < fraction_nan_max:
-            original = pd.concat([original, sub])
-            length.append(len(sub))
+    try:
+        for _, sub in data.groupby("uniqueid"):
+            sub, c = fill_gaps(sub, "frame")
+            if c / len(sub) < fraction_nan_max:
+                original = pd.concat([original, sub])
+                length.append(len(sub))
+    except:
+        original = data.copy()
 
     data = original.copy()
     data["prediction"] = -1
@@ -217,6 +249,7 @@ def calculate_duration_second_passage_time(
             (
                 duration,
                 second_passage_time,
+                frequency,
             ) = contact_duration_second_passage_time_inclusive(
                 df=df_tmp,
                 resolution=resolution,
@@ -229,7 +262,7 @@ def calculate_duration_second_passage_time(
             second_passage_times = pd.concat(
                 [second_passage_times, second_passage_time]
             )
-
+            frequencies = pd.concat([frequencies, frequency])
         fraction_time.append(np.mean(np.concatenate(av)))
         conditions.append(condition)
     durations[["cell_line", "induction_time"]] = durations["condition"].str.split(
@@ -240,7 +273,11 @@ def calculate_duration_second_passage_time(
         "condition"
     ].str.split("_", expand=True)
 
-    return durations, second_passage_times, fraction_time, conditions, data
+    frequencies[["cell_line", "induction_time"]] = frequencies["condition"].str.split(
+        "_", expand=True
+    )
+
+    return durations, second_passage_times, frequencies, fraction_time, conditions, data
 
 
 def plot(df, x, y, title):
@@ -279,3 +316,10 @@ def reorder_hmm_model_parameters(model):
     newmodel.covars_ = model.covars_[ordering]
     newmodel.transmat_ = model.transmat_[ordering, :][:, ordering]
     return newmodel
+
+def confidence_interval(data, confidence=0.95):
+    a = 1.0 * np.array(data)
+    n = len(a)
+    m, se = np.mean(a), scipy.stats.sem(a)
+    h = se * scipy.stats.t.ppf((1 + confidence) / 2., n-1)
+    return h
