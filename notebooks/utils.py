@@ -223,10 +223,30 @@ def calculate_duration_second_passage_time(
         original = data.copy()
 
     data = original.copy()
+    means = model.means_
+    covars = model.covars_
     data["prediction"] = -1
     # inference and calculation of contact duration and second passage time
     for condition, df in data.groupby("condition"):
         av = []
+        d = df.distance.values.reshape(-1, 1)
+        nstates = 2
+        model = hmm.GaussianHMM(
+            n_components=nstates,
+            covariance_type="full",
+            min_covar=0.1,
+            n_iter=10000,
+            params="mtc",
+            init_params="mtc",
+            hack=True,
+            hack_mean = means[0],
+            hack_covar = covars.squeeze()[0]
+        )
+
+        # instead of fitting
+        model.startprob_ = [1/nstates] * nstates
+        model.fit(d)
+
         for uniqueid, sub in df.groupby("uniqueid"):
             distance = sub.distance.values.reshape(-1, 1)
             if not gt:
