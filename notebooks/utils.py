@@ -343,3 +343,29 @@ def confidence_interval(data, confidence=0.95):
     m, se = np.mean(a), scipy.stats.sem(a)
     h = se * scipy.stats.t.ppf((1 + confidence) / 2., n-1)
     return h
+
+def calc_loops_gaps_total_len_gt(df, rev=True):
+    # 1 - unlooped
+    # 0 - looped
+    arr=df.bond.values
+    if reversed:
+        arr=1-arr
+    loops = []
+    gaps = []
+    streak = 1
+    
+    for i in range(len(arr)-1):
+        if arr[i+1] - arr[i] == 1:
+            loops.append(streak)
+            streak = 1
+        elif arr[i+1] - arr[i] == -1:
+            gaps.append(streak)
+            streak = 1
+        elif arr[i+1] - arr[i] == 0:
+            streak += 1
+        if i == len(arr)-2:
+            if arr[i+1] > 0:
+                gaps.append(streak)
+            else:
+                gaps.append(streak)
+    return loops, gaps
