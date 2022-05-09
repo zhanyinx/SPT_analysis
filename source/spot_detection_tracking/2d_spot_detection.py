@@ -74,6 +74,12 @@ def _parse_args():
         default=1,
         help="Time resolution, default 1 time unit.",
     )
+    parser.add_argument(
+        "-p",
+        "--predict",
+        action='store_true',
+        help="If True, it will predict the pixel width and height of the image (overrides -pw and -hw). Default False.",
+    )
 
     args = parser.parse_args()
     return args
@@ -135,16 +141,29 @@ def main():
 
     # micron based
     if args.spatialunits == "um":
-        create_trackmate_xml(
-            file_image=args.input,
-            spots_df=df[["x", "y", "slice"]].copy(),
-            file_output=f"{outdir}/um_based/{outxml}",
-            spatialunits=args.spatialunits,
-            timeunits=args.timeunits,
-            pixelwidth=args.pixelwidth,
-            pixelheight=args.pixelheight,
-            timeinterval=args.timeinterval,
-        )
+        if args.predict:
+            width, height = predict_pixel_size(args.input)
+            create_trackmate_xml(
+                file_image=args.input,
+                spots_df=df[["x", "y", "slice"]].copy(),
+                file_output=f"{outdir}/um_based/{outxml}",
+                spatialunits=args.spatialunits,
+                timeunits=args.timeunits,
+                pixelwidth=width,
+                pixelheight=height,
+                timeinterval=args.timeinterval,
+            )
+        else:
+            create_trackmate_xml(
+                file_image=args.input,
+                spots_df=df[["x", "y", "slice"]].copy(),
+                file_output=f"{outdir}/um_based/{outxml}",
+                spatialunits=args.spatialunits,
+                timeunits=args.timeunits,
+                pixelwidth=args.pixelwidth,
+                pixelheight=args.pixelheight,
+                timeinterval=args.timeinterval,
+            )
 
     # Save pdf
     with PdfPages(outname) as pdf:
