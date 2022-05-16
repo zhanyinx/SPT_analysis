@@ -1,6 +1,6 @@
 import streamlit as st
 import os
-from .dictionary import LIST_SAMPLES_MSD
+from .dictionary import LIST_SAMPLES_MSD, SYSTEMATIC_ERRORS
 from .utils import *
 
 
@@ -71,12 +71,21 @@ def systematic_error_table(list_samples):
     )
 
 
-def rousetime_table(data, time_resolution=0.1):
+def rousetime_table(data, sample, time_resolution=0.1):
     """Calculate rouse time given the rouse time experimental data."""
     df = pd.DataFrame()
 
     # Subtract cell line specific specific experimental error
-    data = sample_specific_systematic_error(data)
+    if st.checkbox("Subtract cell line specific experimental error instead of global systematic error", False):
+        data = sample_specific_systematic_error(data)
+    else:
+        if st.checkbox("Add fixed samples in the table", False):
+            data = data.copy()
+        else:
+            data = data[~(data["induction_time"] == "fixed")].copy()
+
+        systematic_error = SYSTEMATIC_ERRORS[sample]
+        data["tamsd"] = data["tamsd"] - systematic_error
 
     # create experimental condition variable
     data["condition"] = [
@@ -135,7 +144,16 @@ def tables():
 
     # Samples
     list_samples = LIST_SAMPLES_MSD
-    systematic_error_table(list_samples)
+    if st.checkbox("Check to calculate Systematic error", False):
+        systematic_error_table(list_samples)
 
-    original_data = load_data(f"rousetime.csv.zip")
-    rousetime_table(original_data)
+    rousetime = {key: value for key, value in LIST_SAMPLES_MSD.items() if "rouse" in key}
+
+    sample = st.selectbox("Select sample for rouse time", list(rousetime.keys()))
+    # download data if not already present
+    if not os.path.isfile(f"{sample}.csv.zip"):
+        sample_link = list_samples[sample]
+        gdown.download(sample_link, f"{sample}.csv.zip")
+    original_data = load_data(f"{sample}.csv.zip")
+
+    rousetime_table(original_data.copy(), sample)

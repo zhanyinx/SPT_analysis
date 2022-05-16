@@ -5,6 +5,7 @@ LIST_SAMPLES_MSD = {
     "sororin_new_202111": "https://drive.google.com/uc?export=download&id=1301gA0rcPVTAj4GfMkKqZctMgqlEsxq8",
     "wapl_new_202111": "https://drive.google.com/uc?export=download&id=10LpFBdZrPaK4ACMsql992NQuWBO-mLKP",
     "rousetime": "https://drive.google.com/uc?export=download&id=1aMj2c6TkIN3NfKmRzD6-bCjcUz424Mf8",
+    "220511_rousetime": "https://drive.google.com/uc?export=download&id=1JB55yYqH6y4sCNqDNgtFREJG5f_Bo3un",
     "twocolor_degron_all_lines_10s": "https://drive.google.com/uc?export=download&id=1n-Erm6jCL1GBq3vCsy5u1X_DFJjyot8I",
     "twocolor_degron_all_lines_30s": "https://drive.google.com/uc?export=download&id=1cZeim0xL030fjYLKsgPwrWNb4LjNQ33Q",
     "twocolor_degron_all_lines_10s_absolute_msd": "https://drive.google.com/uc?export=download&id=1g_kXT45eZUGxeak3AsiiI8n0kiD08O6L",
@@ -42,16 +43,17 @@ PAGES = {
 }
 
 SYSTEMATIC_ERRORS = {
+    "220511_rousetime": 0.00635,
+    "ctcf": 0.0148,
     "rad21": 0.0148,
     "rad21_pairwise": 0.0119,
-    "ctcf": 0.0148,
-    "sororin_new_202111": 0.0148,
-    "wapl_new_202111": 0.0148,
     "rousetime": 0.0025,
+    "sororin_new_202111": 0.0148,
     "twocolor_degron_all_lines_10s": 0.0082,
     "twocolor_degron_all_lines_10s_absolute_msd": 0.0148,
-    "twocolor_degron_all_lines_30s_absolute_msd": 0.0148,
     "twocolor_degron_all_lines_30s": 0.0082,
+    "twocolor_degron_all_lines_30s_absolute_msd": 0.0148,
     "twocolor_degron_twoctcf_2d_1s": 0.0082,
     "twocolor_degron_twoctcf_60s": 0.0082,
+    "wapl_new_202111": 0.0148,
 }
