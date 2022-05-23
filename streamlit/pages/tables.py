@@ -156,4 +156,7 @@ def tables():
         gdown.download(sample_link, f"{sample}.csv.zip")
     original_data = load_data(f"{sample}.csv.zip")
 
-    rousetime_table(original_data.copy(), sample)
+    # Take input from user for time resultion of acquisition
+    time_resolution = float(st.sidebar.text_input("Acquisition time resolution", "0.1"))
+
+    rousetime_table(original_data.copy(), sample, time_resolution=time_resolution)

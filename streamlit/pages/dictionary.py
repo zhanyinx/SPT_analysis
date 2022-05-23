@@ -43,7 +43,7 @@ PAGES = {
 }
 
 SYSTEMATIC_ERRORS = {
-    "220511_rousetime": 0.00635,
+    "220511_rousetime": 0.0025,
     "ctcf": 0.0148,
     "rad21": 0.0148,
     "rad21_pairwise": 0.0119,
