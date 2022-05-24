@@ -88,13 +88,16 @@ def rousetime_table(data, sample, time_resolution=0.1):
         data["tamsd"] = data["tamsd"] - systematic_error
 
     # create experimental condition variable
-    data["condition"] = [
-        f"{cl}_itime{time}"
-        for cl, time in zip(
-            data["cell_line"],
-            data["induction_time"],
-        )
-    ]
+    if st.checkbox("Check to merge cell lines at given induction time", True):
+        data["condition"] = data["induction_time"]
+    else:
+        data["condition"] = [
+            f"{cl}_itime{time}"
+            for cl, time in zip(
+                data["cell_line"],
+                data["induction_time"],
+            )
+        ]
 
     # Loop over experimental condition
     for condition in data["condition"].unique():
@@ -144,8 +147,8 @@ def tables():
 
     # Samples
     list_samples = LIST_SAMPLES_MSD
-    if st.checkbox("Check to calculate Systematic error", False):
-        systematic_error_table(list_samples)
+    # if st.checkbox("Check to calculate Systematic error", False):
+    #     systematic_error_table(list_samples)
 
     rousetime = {key: value for key, value in LIST_SAMPLES_MSD.items() if "rouse" in key}
 
