@@ -625,6 +625,8 @@ def calculate_pairwise_distance(df: pd.DataFrame):
 
     res = pd.DataFrame(channel1 - channel2)
     res.columns = ["x", "y", "z"]
+    res[['x_c1', 'y_c1', 'z_c1']] = channel1
+    res[['x_c2', 'y_c2', 'z_c2']] = channel2
     res["frame"] = df[FRAME].values
     # res["cell"] = [
     #     f"w1.{w1}_w2.{w2}"
