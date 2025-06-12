@@ -211,7 +211,7 @@ def main():
     frame = 0
 
     for coord in coord_list_gauss:
-        if len(coord > 0):
+        if len(coord) > 0:
             df_new = pd.DataFrame(coord, columns=["x", "y", "z"])
             df_new["frame"] = frame
             df = pd.concat([df, df_new])

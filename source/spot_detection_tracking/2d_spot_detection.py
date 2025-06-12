@@ -174,8 +174,8 @@ def main():
                     np.max(movie[idx], axis=0), vmax=np.quantile(movie[idx], 0.999)
                 )
                 ax[0].scatter(
-                    df[df["slice" == idx]]["x"],
-                    df[df["slice" == idx]]["y"],
+                    df[df["slice"] == idx]["x"],
+                    df[df["slice"] == idx]["y"],
                     color="red",
                     marker="+",
                 )
@@ -183,8 +183,8 @@ def main():
                     np.max(movie[idx], axis=0), vmax=np.quantile(movie[idx], 0.999)
                 )
                 ax[1].scatter(
-                    df[df["slice" == idx]]["x"],
-                    df[df["slice" == idx]]["y"],
+                    df[df["slice"] == idx]["x"],
+                    df[df["slice"] == idx]["y"],
                     color="red",
                     marker="+",
                 )
